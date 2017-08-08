@@ -13,6 +13,7 @@
 
 using namespace std;
 
+const double tolerance = 1.e-15;
 const std::complex<double> i(0, 1);
 inline double cot(double x){return (cos(x)/sin(x));}
 

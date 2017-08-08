@@ -31,7 +31,7 @@ void inline debugger(int cln, const char* cfn)
 string truestring = "true";
 string falsestring = "false";
 
-bool white_noise = false;
+bool white_noise = true;
 
 inline string return_boolean_string(bool test){return (test ? truestring : falsestring);}
 
@@ -44,7 +44,7 @@ struct chosen_particle
 extern const double hbarC;
 extern const double Cem;
 
-extern double tauC;
+extern const double tauQ, vQ2, DQ, tauC;
 
 double fraction_of_evolution;
 
@@ -104,7 +104,8 @@ inline void set_phase_diagram_and_EOS_parameters()
 	A4 = M_PI*M_PI*(16.0 + 10.5*Nf) / 90.0;				//coeff in P(T) (i.e., EOS)
 	A2 = Nf / 18.0;										//same
 	A0 = Nf / (324.0 * M_PI * M_PI);					//same
-	C0 = mu0*mu0*( A2 - 2.0*A0*mu0*mu0 / (T0*T0) );		//same
+	//C0 = mu0*mu0*( A2 - 2.0*A0*mu0*mu0 / (T0*T0) );		//same
+	C0 = 0.0;											//same
 	B = 0.8 * pow(T0, 4.0);								//same
 
 	return;
@@ -172,7 +173,8 @@ inline double Fn(double x, void * p)
 	double cx = cosh(x);
 	
 	double c1 = 0.0;
-	double c2 = sf * chi_tilde_T_T;
+	//double c2 = sf * chi_tilde_T_T;
+	double c2 = chi_tilde_T_T;
 
 	double mByT = (params->mass) / Tf;
 
@@ -184,36 +186,36 @@ inline complex<double> Ftilde_n(double k, void * p)
 	return (integrate_1D_FT(Fn, xi_pts_minf_inf, xi_wts_minf_inf, n_xi_pts, k, p));
 }
 
-inline complex<double> psi_plus(double k, double x)
+inline complex<double> psi_plus(complex<double> k, complex<double> x)
 {
-	complex<double> lambda = sqrt(0.25 - vQ*vQ*k*k);
+	complex<double> lambda = sqrt(0.25 - vQ2*k*k);
 	return (
 			pow(x,lambda-0.5) * exp(-x)
 			* Hypergeometric1F1(lambda+1.5, 2.0*lambda+1.0, x)
 			);
 }
 
-inline complex<double> psi_minus(double k, double x)
+inline complex<double> psi_minus(complex<double> k, complex<double> x)
 {
-	complex<double> mlambda = -sqrt(0.25 - vQ*vQ*k*k);
+	complex<double> mlambda = -sqrt(0.25 - vQ2*k*k);
 	return (
 			pow(x,mlambda-0.5) * exp(-x)
 			* Hypergeometric1F1(mlambda+1.5, 2.0*mlambda+1.0, x)
 			);
 }
 
-inline complex<double> psi_dot_plus(double k, double x)
+inline complex<double> psi_dot_plus(complex<double> k, complex<double> x)
 {
-	complex<double> lambda = sqrt(0.25 - vQ*vQ*k*k);
+	complex<double> lambda = sqrt(0.25 - vQ2*k*k);
 	return (
 			0.5 * (2.0*lambda-1.0) * pow(x,lambda-1.5) * exp(-0.5*x)
 			* Hypergeometric0F1(lambda+1.0, x*x/16.0)
 			);
 }
 
-inline complex<double> psi_dot_minus(double k, double x)
+inline complex<double> psi_dot_minus(complex<double> k, complex<double> x)
 {
-	complex<double> mlambda = -sqrt(0.25 - vQ*vQ*k*k);
+	complex<double> mlambda = -sqrt(0.25 - vQ2*k*k);
 	return (
 			0.5 * (2.0*mlambda-1.0) * pow(x,mlambda-1.5) * exp(-0.5*x)
 			* Hypergeometric0F1(mlambda+1.0, x*x/16.0)
@@ -250,13 +252,20 @@ inline complex<double> tau_integration(complex<double> (*Gtilde_X)(double, doubl
 		double tau_loc = tau_pts[it];
 		double T_loc = T_pts[it];
 		double s_loc = s_vs_T(T_loc);
-		double tau3 = tau_loc*tau_loc*tau_loc;
-		double two_pi_DQ_T = 2.0*M_PI*DQ*T_loc;
+		//double tau3 = tau_loc*tau_loc*tau_loc;
+		//double two_pi_DQ_T = 2.0*M_PI*DQ*T_loc;
 		double chi_Q = chi_mumu(T_loc);
-		complex<double> tmp_result = 2.0 * tau_wts[it] * two_pi_DQ_T * chi_Q / (s_loc*s_loc*tau3)
+//		complex<double> tmp_result = 2.0 * tau_wts[it] * two_pi_DQ_T * chi_Q / (s_loc*s_loc*tau3)
+//					* (*Gtilde_X)(k, tauf, tau_loc) * (*Gtilde_Y)(-k, tauf, tau_loc)
+//					* s_loc * s_loc;	//extra factors of entropy needed
+//cout << tau_loc << "   " << 2.0 * DQ * chi_Q * T_loc * tau_loc << endl;
+		complex<double> tmp_result = tau_wts[it] * ( 2.0 * DQ * chi_Q * T_loc )
 					* (*Gtilde_X)(k, tauf, tau_loc) * (*Gtilde_Y)(-k, tauf, tau_loc);
 		result += tmp_result;
 	}
+
+//if (1) exit(0);
+//cout << "CHECK: " << k << "   " << result.real() << endl;
 
 	return (result);
 }
@@ -282,9 +291,9 @@ inline void set_running_transport_integral(double * run_int_array)
 			double s_loc = s_vs_T(T_loc);
 			double two_pi_DQ_T = 2.0*M_PI*DQ*T_loc;
 			double chi_Q = chi_mumu(T_loc);
-			sum += x_wts[ix] * hw * exp(t_loc / tauC) * 2.0 * two_pi_DQ_T * chi_Q / (s_loc*s_loc*t_loc);
+			sum += x_wts[ix] * hw * exp(t_loc / tauQ) * 2.0 * two_pi_DQ_T * chi_Q / (s_loc*s_loc*t_loc);
 		}
-		run_int_array[it+1] = exp(-t1 / tauC) * ( tauC * exp(t0 / tauC) * run_int_array[it] + sum ) / tauC;	//this array contains eta(x) (defined on my whiteboard)
+		run_int_array[it+1] = exp(-t1 / tauQ) * ( tauQ * exp(t0 / tauQ) * run_int_array[it] + sum ) / tauQ;	//this array contains eta(x) (defined on my whiteboard)
 	}
 
 	delete [] x_pts;
@@ -302,12 +311,13 @@ inline complex<double> colored_tau_integration(complex<double> (*Gtilde_X)(doubl
 	double * x_wts = new double [n_x_pts];
 	gauss_quadrature(n_x_pts, 1, 0.0, 0.0, -1.0, 1.0, x_pts, x_wts);
 
-	double delta_tau_lower = -10.0 * tauC, delta_tau_upper = 10.0 * tauC;	//this bounds the interval where the integrand is large-ish
+	double delta_tau_lower = -10.0 * tauQ, delta_tau_upper = 10.0 * tauQ;	//this bounds the interval where the integrand is large-ish
 	for (int itp = 0; itp < n_tau_pts; ++itp)
 	{
 		double tX_loc = tau_pts[itp];
 		double TX_loc = T_pts[itp];
-		complex<double> factor_X = (*Gtilde_X)(k, tauf, tX_loc) / tX_loc;
+		double sX_loc = s_vs_T(TX_loc);
+		complex<double> factor_X = sX_loc * (*Gtilde_X)(k, tauf, tX_loc) / tX_loc;		//extra factor of entropy!!!
 
 		double tau_lower = max(taui, tX_loc + delta_tau_lower);			//if lower limit goes before beginning of lifetime, just start at tau0
 		double tau_upper = min(tauf, tX_loc + delta_tau_upper);			//if upper limit goes past end of lifetime, just end at tauf
@@ -319,12 +329,13 @@ inline complex<double> colored_tau_integration(complex<double> (*Gtilde_X)(doubl
 		{
 			double tY_loc = cen_loc + hw_loc * x_pts[ix];
 			double TY_loc = interpolate1D(tau_pts, T_pts, tY_loc, n_tau_pts, 0, false, 2);
-			complex<double> factor_Y = (*Gtilde_Y)(-k, tauf, tY_loc) / tY_loc;
+			double sY_loc = s_vs_T(TY_loc);
+			complex<double> factor_Y = sY_loc * (*Gtilde_Y)(-k, tauf, tY_loc) / tY_loc;	//extra factor of entropy!!!
 
 			double min_tp_tpp = min(tX_loc, tY_loc);
 			double eta_at_min_tp_tpp = interpolate1D(tau_pts, running_integral_array, min_tp_tpp, n_tau_pts, 0, false, 2);
 
-			double sum_XY = exp(-abs(tX_loc - tY_loc) / tauC) * eta_at_min_tp_tpp / (2.0*tauC);
+			double sum_XY = exp(-abs(tX_loc - tY_loc) / tauQ) * eta_at_min_tp_tpp / (2.0*tauQ);
 			sum_X += hw_loc * x_wts[ix] * factor_Y * sum_XY;
 		}
 		locsum += tau_wts[itp] * factor_X * sum_X;
@@ -344,7 +355,7 @@ inline complex<double> Ctilde_n_n(double k)
 	else
 		sum = colored_tau_integration(Gtilde_n_color, Gtilde_n_color, k);
 
-	return ( sum );	//fm^2
+	return ( sum / (tauf*tauf) );	//fm^2; note that we must include extra factor of tauf^-2 for consistency with manuscript
 }
 
 ////////////////////////////////////////////////////////////////////////////////

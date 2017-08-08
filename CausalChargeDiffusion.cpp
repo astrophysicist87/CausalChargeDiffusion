@@ -22,16 +22,16 @@ int particle_to_study;
 
 const double hbarC = 197.33;
 const double Cem = 2.0 / 3.0;	//my current best guess
-const double k_infinity = 15.0;
-const double xi_infinity = 10.0;
-const int n_Dy = 1;
+const double k_infinity = 10.0;
+const double xi_infinity = 5.0;
+const int n_Dy = 51;
 
-const double tauC = 0.5;	//fm/c
+//const double tauC = 0.5;	//fm/c
 const double DQ = 0.162035;	//fm (rough estimate!)
+//const double vQ2 = DQ/tauQ;	//N.B. - must have tauQ > DQ for sub-luminal speed!
+const double vQ2 = 1.0/3.0;
+const double tauC = DQ/vQ2;
 const double tauQ = tauC;	//for consistency with manuscript
-const double vQ2 = DQ/tauQ;	//N.B. - must have tauQ > DQ for sub-luminal speed!
-
-const bool shift_by_intercept = false;
 
 long n_interp;
 
@@ -44,16 +44,14 @@ double T0, mu0, Tc, Pc, nc, sc, wc, muc;
 double A0, A2, A4, C0, B, mui, muf, xi0, xibar0, etaBYs, RD, sPERn, Nf, qD, si, ni;
 double a_at_tauf, vs2_at_tauf, vn2_at_tauf, vsigma2_at_tauf;
 
-const int n_xi_pts = 200;
-const int n_k_pts = 200;
-const int n_tau_pts = 200;
+const int n_xi_pts = 201;
+const int n_k_pts = 201;
+const int n_tau_pts = 201;
 double * xi_pts_minf_inf, * xi_wts_minf_inf;
 double * k_pts, * k_wts;
 double * tau_pts, * tau_wts;
 double * T_pts;
 double * running_integral_array;
-
-double * interp_T_pts, * interp_transport_pts;
 
 int main(int argc, char *argv[])
 {
@@ -156,18 +154,16 @@ int main(int argc, char *argv[])
 	//computes tau-dependence of T and mu for remainder of calculation
 	populate_T_vs_tau();
 
-	// read in table for interpolation of transport coefficients
-	n_interp = get_filelength("transport.dat");
-	interp_T_pts = new double [n_interp];
-	interp_transport_pts = new double [n_interp];
-	read_in_transport_table(n_interp, "transport.dat");
-
 	//get the ensemble averaged spectra
 	double norm = integrate_1D(norm_int, xi_pts_minf_inf, xi_wts_minf_inf, n_xi_pts, &particle1);	//by definition of charge balance function (CBF)
 
 	//vectorize calculations to make them run a little faster
 	vector<complex<double> > Ftn_particle1_vec, Ftn_particle2_vec;
 	vector<complex<double> > Ctnn_vec;
+
+//	for (int ixi = 0; ixi < n_xi_pts; ++ixi)
+//		cout << xi_pts_minf_inf[ixi] << "   " << Fn(xi_pts_minf_inf[ixi], &particle1) << "   " << Fn(xi_pts_minf_inf[ixi], &particle1) << endl;
+//if (1) return (0);
 
 	for (int ik = 0; ik < n_k_pts; ++ik)
 	{
@@ -179,7 +175,7 @@ int main(int argc, char *argv[])
 
 	//compute running integral of transport/medium effects
 	running_integral_array = new double [n_tau_pts];
-	set_running_transport_integral(running_integral_array, true, 0.0);
+	set_running_transport_integral(running_integral_array);
 
 	for (int ik = 0; ik < n_k_pts; ++ik)
 	{
@@ -189,7 +185,6 @@ int main(int argc, char *argv[])
 	}
 
 	//start computing actual charge balance functions here
-	complex<double> intercept_lattice(0,0);
 	for (int iDy = 0; iDy < n_Dy; iDy++)
 	{
 		double Delta_y = (double)iDy * Delta_y_step;
@@ -201,18 +196,16 @@ int main(int argc, char *argv[])
 
 			complex<double> Ftn1 = Ftn_particle1_vec[ik];
 			complex<double> Ftn2 = Ftn_particle2_vec[ik];
-			complex<double> Ctnn = Ctnn_vec[ik];
+			complex<double> Ctnn = Ctnn_vec[0] - Ctnn_vec[ik];
 
 			sum_lattice += k_wts[ik] * exp(i * k * Delta_y)
 					* ( Ftn1 * conj(Ftn2) * Ctnn );
+			//cout << k << "   " << (Ftn1 * conj(Ftn2)).real() << "   " << Ctnn.real() << "   " << (Ftn1 * conj(Ftn2) * Ctnn).real() << endl;
 		}
-
-		//adjust average value to get true charge balance function
-		if (shift_by_intercept and iDy == 0)	//assume we start at Delta y == 0
-			intercept_lattice = sum_lattice;
+//if (1) return (0);
 
 		//N.B. - factors of 2 convert to charge balance function
-		complex<double> result_lattice = (ds*tauf*Tf / (8.0*M_PI*M_PI*M_PI * norm)) * (sum_lattice + intercept_lattice);
+		complex<double> result_lattice = (ds*tauf*Tf / (8.0*M_PI*M_PI*M_PI * norm)) * sum_lattice;
 		cout << setprecision(15) << Delta_y << "   " << result_lattice.real() << "   " << result_lattice.imag() << endl;
 	}
 
