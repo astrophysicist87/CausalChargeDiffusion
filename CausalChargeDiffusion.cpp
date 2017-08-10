@@ -196,7 +196,7 @@ int main(int argc, char *argv[])
 
 			complex<double> Ftn1 = Ftn_particle1_vec[ik];
 			complex<double> Ftn2 = Ftn_particle2_vec[ik];
-			complex<double> Ctnn = Ctnn_vec[0] - Ctnn_vec[ik];
+			complex<double> Ctnn = Ctnn_vec[ik];
 
 			sum_lattice += k_wts[ik] * exp(i * k * Delta_y)
 					* ( Ftn1 * conj(Ftn2) * Ctnn );
@@ -204,8 +204,7 @@ int main(int argc, char *argv[])
 		}
 //if (1) return (0);
 
-		//N.B. - factors of 2 convert to charge balance function
-		complex<double> result_lattice = (ds*tauf*Tf / (8.0*M_PI*M_PI*M_PI * norm)) * sum_lattice;
+		complex<double> result_lattice = (ds*tauf*Tf / (4.0*M_PI*M_PI * norm)) * sum_lattice;
 		cout << setprecision(15) << Delta_y << "   " << result_lattice.real() << "   " << result_lattice.imag() << endl;
 	}
 

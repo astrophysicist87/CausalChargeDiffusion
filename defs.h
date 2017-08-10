@@ -222,6 +222,80 @@ inline complex<double> psi_dot_minus(complex<double> k, complex<double> x)
 			);
 }
 
+
+//define some functions for subtracting off singularities from product of colored Green's functions
+inline double g1(double x)
+{
+	double x2 = x*x;
+	return (
+				-x2/16.0 - x/2.0 - log(x)/8.0
+			); 
+}
+
+inline double g2(double x)
+{
+	double x2 = x*x;
+	double x3 = x2*x;
+	double x4 = x2*x2;
+	double lnx = log(x);
+	double lnx2 = lnx*lnx;
+	return (
+				x4/512.0 + x3/32.0 + x2/16.0 - x/4.0 + x2*lnx/128 + x*lnx/16.0 + lnx2/128.0
+			);
+}
+
+inline double B1(double x, double xp)
+{
+	return (
+				g1(xp) - g1(x) + (xp + 1.0) / 2.0
+			);
+}
+
+inline double B2(double x, double xp)
+{
+	double g1xp = g1(xp);
+	double Del_g1 = g1xp - g1(x);
+	double Del_g2 = g2(xp) - g2(x);
+
+	return (
+			0.5 * Del_g1 * (2.0 * g1xp + xp + 1.0) - Del_g2
+			};
+}
+
+inline GG_self_correlations(double k, double tau1p, double tau2p)
+{
+	double xf = tauf / tauQ;
+	double x1p = tau1p / tauQ;
+	double x2p = tau2p / tauQ;
+	double prefactor = sqrt(tauf*tauf / (tau1p*tau2p)
+						* exp( 0.5 * (x1p + x2p) - xf )
+						/ (2.0*vQ2);
+	double vQ = sqrt(vQ2);
+	double arg = vQ * k * log(tau2p/tau1p);
+
+	double B1_xf_x1p = B1(xf, x1p);
+	double B1_xf_x2p = B1(xf, x2p);
+	double B2_xf_x1p = B2(xf, x1p);
+	double B2_xf_x2p = B2(xf, x2p);
+
+	double C1 = vQ2*k*k + B1_xf_x1p * B1_xf_x2p - B2_xf_x1p - B2_xf_x2p;
+	double C2 = vQ * k * (B1_xf_x1p - B1_xf_x2p);
+
+	return (
+				prefactor * ( C1 * cos(arg) + C2 * sin(arg) )
+			);
+}
+
+inline double mediumN(double tau_loc)
+{
+	double T_loc = interpolate1D(tau_pts, T_pts, tau_loc, n_tau_pts, 0, false);
+	double s_loc = s_vs_T(T_loc);
+	double chi_Q = chi_mumu(T_loc);
+	double numerator = 2.0 * DQ * chi_Q * T_loc;
+	double denominator = tau_loc * s_loc * s_loc;	//assume transverse area A already accounted for...
+	return ( numerator / denominator );
+}
+
 inline complex<double> Gtilde_n_white(double k, double tau, double taup)
 {
 	double arg = DQ * k * k * ((1.0/tau) - (1.0/taup));	//since tau==tauf always in this calculation,
@@ -252,22 +326,17 @@ inline complex<double> tau_integration(complex<double> (*Gtilde_X)(double, doubl
 		double tau_loc = tau_pts[it];
 		double T_loc = T_pts[it];
 		double s_loc = s_vs_T(T_loc);
-		//double tau3 = tau_loc*tau_loc*tau_loc;
-		//double two_pi_DQ_T = 2.0*M_PI*DQ*T_loc;
 		double chi_Q = chi_mumu(T_loc);
-//		complex<double> tmp_result = 2.0 * tau_wts[it] * two_pi_DQ_T * chi_Q / (s_loc*s_loc*tau3)
-//					* (*Gtilde_X)(k, tauf, tau_loc) * (*Gtilde_Y)(-k, tauf, tau_loc)
-//					* s_loc * s_loc;	//extra factors of entropy needed
 //cout << tau_loc << "   " << 2.0 * DQ * chi_Q * T_loc * tau_loc << endl;
-		complex<double> tmp_result = tau_wts[it] * ( 2.0 * DQ * chi_Q * T_loc )
-					* (*Gtilde_X)(k, tauf, tau_loc) * (*Gtilde_Y)(-k, tauf, tau_loc);
+		complex<double> tmp_result = tau_wts[it] * ( 2.0 * DQ * chi_Q * T_loc / tau_loc )
+										* (*Gtilde_X)(k, tauf, tau_loc) * (*Gtilde_Y)(-k, tauf, tau_loc);
 		result += tmp_result;
 	}
 
 //if (1) exit(0);
-//cout << "CHECK: " << k << "   " << result.real() << endl;
+//cout << "CHECK: " << k << "   " << result.real() << "   " << result.real() - ( chi_mumu(Tf) * Tf * tauf ) << endl;
 
-	return (result);
+	return ( ( chi_mumu(Tf) * Tf * tauf ) - result );
 }
 
 inline void set_running_transport_integral(double * run_int_array)
@@ -287,11 +356,7 @@ inline void set_running_transport_integral(double * run_int_array)
 		for (int ix = 0; ix < n_x_pts; ++ix)
 		{
 			double t_loc = cen + hw * x_pts[ix];
-			double T_loc = interpolate1D(tau_pts, T_pts, t_loc, n_tau_pts, 0, false);
-			double s_loc = s_vs_T(T_loc);
-			double two_pi_DQ_T = 2.0*M_PI*DQ*T_loc;
-			double chi_Q = chi_mumu(T_loc);
-			sum += x_wts[ix] * hw * exp(t_loc / tauQ) * 2.0 * two_pi_DQ_T * chi_Q / (s_loc*s_loc*t_loc);
+			sum += x_wts[ix] * hw * exp(t_loc / tauQ) * mediumN(t_loc);
 		}
 		run_int_array[it+1] = exp(-t1 / tauQ) * ( tauQ * exp(t0 / tauQ) * run_int_array[it] + sum ) / tauQ;	//this array contains eta(x) (defined on my whiteboard)
 	}
@@ -302,7 +367,10 @@ inline void set_running_transport_integral(double * run_int_array)
 	return;
 }
 
-inline complex<double> colored_tau_integration(complex<double> (*Gtilde_X)(double, double, double), complex<double> (*Gtilde_Y)(double, double, double), double k)
+inline complex<double> colored_tau_integration(
+					complex<double> (*Gtilde_X)(double, double, double),
+					complex<double> (*Gtilde_Y)(double, double, double),
+					double k)
 {
 	complex<double> locsum(0,0);
 	
@@ -317,7 +385,7 @@ inline complex<double> colored_tau_integration(complex<double> (*Gtilde_X)(doubl
 		double tX_loc = tau_pts[itp];
 		double TX_loc = T_pts[itp];
 		double sX_loc = s_vs_T(TX_loc);
-		complex<double> factor_X = sX_loc * (*Gtilde_X)(k, tauf, tX_loc) / tX_loc;		//extra factor of entropy!!!
+		complex<double> factor_X = sX_loc * (*Gtilde_X)(k, tauf, tX_loc);		//extra factor of entropy!!!
 
 		double tau_lower = max(taui, tX_loc + delta_tau_lower);			//if lower limit goes before beginning of lifetime, just start at tau0
 		double tau_upper = min(tauf, tX_loc + delta_tau_upper);			//if upper limit goes past end of lifetime, just end at tauf
@@ -328,17 +396,23 @@ inline complex<double> colored_tau_integration(complex<double> (*Gtilde_X)(doubl
 		for (int ix = 0; ix < n_x_pts; ++ix)
 		{
 			double tY_loc = cen_loc + hw_loc * x_pts[ix];
+
+			//check if we want to subtract self-correlations
+			double GG_self_corr = 0.0;
+			if (subtract_self_correlations)
+				GG_self_corr = GG_self_correlations(k, tX_loc, tY_loc)
+
 			double TY_loc = interpolate1D(tau_pts, T_pts, tY_loc, n_tau_pts, 0, false, 2);
 			double sY_loc = s_vs_T(TY_loc);
-			complex<double> factor_Y = sY_loc * (*Gtilde_Y)(-k, tauf, tY_loc) / tY_loc;	//extra factor of entropy!!!
+			complex<double> factor_Y = sY_loc * (*Gtilde_Y)(-k, tauf, tY_loc);	//extra factor of entropy!!!
 
 			double min_tp_tpp = min(tX_loc, tY_loc);
 			double eta_at_min_tp_tpp = interpolate1D(tau_pts, running_integral_array, min_tp_tpp, n_tau_pts, 0, false, 2);
 
 			double sum_XY = exp(-abs(tX_loc - tY_loc) / tauQ) * eta_at_min_tp_tpp / (2.0*tauQ);
-			sum_X += hw_loc * x_wts[ix] * factor_Y * sum_XY;
+			sum_X += hw_loc * x_wts[ix] * ( factor_X * factor_Y - GG_self_corr ) * sum_XY;
 		}
-		locsum += tau_wts[itp] * factor_X * sum_X;
+		locsum += tau_wts[itp] * sum_X;
 	}
 
 	delete [] x_pts;
