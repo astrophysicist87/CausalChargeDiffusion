@@ -269,7 +269,7 @@ inline double GG_self_correlations(double k, double tau1p, double tau2p)
 	double xf = tauf / tauQ;
 	double x1p = tau1p / tauQ;
 	double x2p = tau2p / tauQ;
-	double prefactor = sqrt(tauf*tauf / (tau1p*tau2p) )
+	double prefactor = sqrt( tau1p*tau2p / (tauf*tauf) )
 						* exp( 0.5 * (x1p + x2p) - xf )
 						/ (2.0*vQ2);
 	double vQ = sqrt(vQ2);
@@ -318,14 +318,21 @@ inline complex<double> Gtilde_n_color(double k, double tau, double taup)
 	complex<double> psi_dot_plus_at_taup = psi_dot_plus(k, taup / tauQ);
 	complex<double> psi_dot_minus_at_taup = psi_dot_minus(k, taup / tauQ);
 
-	complex<double> numerator = psi_plus_at_tau * psi_dot_minus_at_taup - psi_minus_at_tau * psi_dot_plus_at_taup + epsilon;
-	complex<double> denominator = psi_plus_at_taup * psi_dot_minus_at_taup - psi_minus_at_taup * psi_dot_plus_at_taup + epsilon;
+	complex<double> numerator = psi_plus_at_tau * psi_dot_minus_at_taup - psi_minus_at_tau * psi_dot_plus_at_taup;
+	complex<double> denominator = psi_plus_at_taup * psi_dot_minus_at_taup - psi_minus_at_taup * psi_dot_plus_at_taup;
 
-//cout << "Gtilde: " << psi_plus_at_tau << "   " << psi_minus_at_tau << "   " << psi_plus_at_taup << "   " << psi_minus_at_taup << "   "
-//		<< psi_dot_plus_at_taup << "   " << psi_dot_minus_at_taup << "   " << numerator << "   " << denominator << "   "
-//		<< i * k * numerator / denominator << endl;
+	complex<double> unregulated_result = numerator / denominator;
+	complex<double> regulated_result = (numerator+epsilon) / (denominator+epsilon);
+	if ( abs(unregulated_result - regulated_result) >= 0.5 * 1.e-10 * abs(unregulated_result + regulated_result)
+		or ( not isfinite( unregulated_result.real() ) )
+		or ( not isfinite( unregulated_result.imag() ) ) )
+		cerr << "WARNING: " << unregulated_result << "   " << regulated_result << endl;
 
-	return ( i * k * numerator / denominator ); //dimensionless
+	//cout << "Gtilde: " << psi_plus_at_tau << "   " << psi_minus_at_tau << "   " << psi_plus_at_taup << "   " << psi_minus_at_taup << "   "
+	//		<< psi_dot_plus_at_taup << "   " << psi_dot_minus_at_taup << "   " << numerator << "   " << denominator << "   "
+	//		<< i * k * numerator / denominator << endl;
+
+	return ( i * k * regulated_result ); //dimensionless
 }
 
 inline complex<double> tau_integration(complex<double> (*Gtilde_X)(double, double, double), complex<double> (*Gtilde_Y)(double, double, double), double k)
