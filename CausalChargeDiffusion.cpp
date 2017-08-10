@@ -44,9 +44,9 @@ double T0, mu0, Tc, Pc, nc, sc, wc, muc;
 double A0, A2, A4, C0, B, mui, muf, xi0, xibar0, etaBYs, RD, sPERn, Nf, qD, si, ni;
 double a_at_tauf, vs2_at_tauf, vn2_at_tauf, vsigma2_at_tauf;
 
-const int n_xi_pts = 201;
-const int n_k_pts = 201;
-const int n_tau_pts = 201;
+const int n_xi_pts = 51;
+const int n_k_pts = 50;	//# of k points should be even to avoid poles in 1F1, etc.!!!
+const int n_tau_pts = 51;
 double * xi_pts_minf_inf, * xi_wts_minf_inf;
 double * k_pts, * k_wts;
 double * tau_pts, * tau_wts;
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 	particle1.index = atoi(argv[1]);
 	particle2.index = atoi(argv[2]);
 	//Ti = atoi(argv[2]) / hbarC;		//initial trajectory temperature
-	Ti = 350.0 / hbarC;
+	Ti = 250.0 / hbarC;
 	fraction_of_evolution = 1.0;
 
 	set_phase_diagram_and_EOS_parameters();

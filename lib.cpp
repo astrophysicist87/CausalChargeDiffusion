@@ -376,6 +376,7 @@ complex<double> Hypergeometric0F1(complex<double> a, complex<double> z)
 		a += 1.0;
 		++i;
 	} while (2.0*abs(sum-oldsum)/abs(sum+oldsum) >= tolerance);
+	//cout << "Hypergeometric0F1(" << a << ", " << z << ") = " << sum << endl;
 	return (sum);
 }
 
@@ -396,6 +397,7 @@ complex<double> Hypergeometric1F1(complex<double> a, complex<double> b, complex<
 		++i;
 	} while (2.0*abs(sum-oldsum)/abs(sum+oldsum) >= tolerance);
 	//cout << "Convergence reached at counter = " << i << "!" << endl;
+	//cout << "Hypergeometric1F1(" << a << ", " << b << ", " << z << ") = " << sum << endl;
 	return (sum);
 }
 

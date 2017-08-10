@@ -31,7 +31,8 @@ void inline debugger(int cln, const char* cfn)
 string truestring = "true";
 string falsestring = "false";
 
-bool white_noise = true;
+bool white_noise = false;
+bool subtract_self_correlations = true;
 
 inline string return_boolean_string(bool test){return (test ? truestring : falsestring);}
 
@@ -198,6 +199,7 @@ inline complex<double> psi_plus(complex<double> k, complex<double> x)
 inline complex<double> psi_minus(complex<double> k, complex<double> x)
 {
 	complex<double> mlambda = -sqrt(0.25 - vQ2*k*k);
+//cout << "psi_minus(" << k << ", " << x << "): " << Hypergeometric1F1(mlambda+1.5, 2.0*mlambda+1.0, x) << endl;
 	return (
 			pow(x,mlambda-0.5) * exp(-x)
 			* Hypergeometric1F1(mlambda+1.5, 2.0*mlambda+1.0, x)
@@ -259,15 +261,15 @@ inline double B2(double x, double xp)
 
 	return (
 			0.5 * Del_g1 * (2.0 * g1xp + xp + 1.0) - Del_g2
-			};
+			);
 }
 
-inline GG_self_correlations(double k, double tau1p, double tau2p)
+inline double GG_self_correlations(double k, double tau1p, double tau2p)
 {
 	double xf = tauf / tauQ;
 	double x1p = tau1p / tauQ;
 	double x2p = tau2p / tauQ;
-	double prefactor = sqrt(tauf*tauf / (tau1p*tau2p)
+	double prefactor = sqrt(tauf*tauf / (tau1p*tau2p) )
 						* exp( 0.5 * (x1p + x2p) - xf )
 						/ (2.0*vQ2);
 	double vQ = sqrt(vQ2);
@@ -280,6 +282,8 @@ inline GG_self_correlations(double k, double tau1p, double tau2p)
 
 	double C1 = vQ2*k*k + B1_xf_x1p * B1_xf_x2p - B2_xf_x1p - B2_xf_x2p;
 	double C2 = vQ * k * (B1_xf_x1p - B1_xf_x2p);
+
+	//cout << "CHECK: " << k << "   " << tau1p << "   " << tau2p << "   " << prefactor * ( C1 * cos(arg) + C2 * sin(arg) ) << endl;
 
 	return (
 				prefactor * ( C1 * cos(arg) + C2 * sin(arg) )
@@ -305,6 +309,8 @@ inline complex<double> Gtilde_n_white(double k, double tau, double taup)
 
 inline complex<double> Gtilde_n_color(double k, double tau, double taup)
 {
+	const double epsilon = 1.e-100;
+
 	complex<double> psi_plus_at_tau = psi_plus(k, tau / tauQ);
 	complex<double> psi_minus_at_tau = psi_minus(k, tau / tauQ);
 	complex<double> psi_plus_at_taup = psi_plus(k, taup / tauQ);
@@ -312,8 +318,12 @@ inline complex<double> Gtilde_n_color(double k, double tau, double taup)
 	complex<double> psi_dot_plus_at_taup = psi_dot_plus(k, taup / tauQ);
 	complex<double> psi_dot_minus_at_taup = psi_dot_minus(k, taup / tauQ);
 
-	complex<double> numerator = psi_plus_at_tau * psi_dot_minus_at_taup - psi_minus_at_tau * psi_dot_plus_at_taup;
-	complex<double> denominator = psi_plus_at_taup * psi_dot_minus_at_taup - psi_minus_at_taup * psi_dot_plus_at_taup;
+	complex<double> numerator = psi_plus_at_tau * psi_dot_minus_at_taup - psi_minus_at_tau * psi_dot_plus_at_taup + epsilon;
+	complex<double> denominator = psi_plus_at_taup * psi_dot_minus_at_taup - psi_minus_at_taup * psi_dot_plus_at_taup + epsilon;
+
+//cout << "Gtilde: " << psi_plus_at_tau << "   " << psi_minus_at_tau << "   " << psi_plus_at_taup << "   " << psi_minus_at_taup << "   "
+//		<< psi_dot_plus_at_taup << "   " << psi_dot_minus_at_taup << "   " << numerator << "   " << denominator << "   "
+//		<< i * k * numerator / denominator << endl;
 
 	return ( i * k * numerator / denominator ); //dimensionless
 }
@@ -335,8 +345,13 @@ inline complex<double> tau_integration(complex<double> (*Gtilde_X)(double, doubl
 
 //if (1) exit(0);
 //cout << "CHECK: " << k << "   " << result.real() << "   " << result.real() - ( chi_mumu(Tf) * Tf * tauf ) << endl;
+	double self_correlation = 0.0;
+	if (subtract_self_correlations)
+		self_correlation = chi_mumu(Tf) * Tf * tauf;
 
-	return ( ( chi_mumu(Tf) * Tf * tauf ) - result );
+	double sign_factor = 1.0-2.0*double(subtract_self_correlations);
+
+	return ( sign_factor * (result - self_correlation) );
 }
 
 inline void set_running_transport_integral(double * run_int_array)
@@ -358,9 +373,10 @@ inline void set_running_transport_integral(double * run_int_array)
 			double t_loc = cen + hw * x_pts[ix];
 			sum += x_wts[ix] * hw * exp(t_loc / tauQ) * mediumN(t_loc);
 		}
-		run_int_array[it+1] = exp(-t1 / tauQ) * ( tauQ * exp(t0 / tauQ) * run_int_array[it] + sum ) / tauQ;	//this array contains eta(x) (defined on my whiteboard)
+		run_int_array[it+1] = exp(-t1 / tauQ) * ( tauQ * exp(t0 / tauQ) * run_int_array[it] + sum ) / tauQ;	//this array contains eta(x)
+		//cout << t0 << "   " << run_int_array[it] << endl;
 	}
-
+//if (1) exit(0);
 	delete [] x_pts;
 	delete [] x_wts;
 
@@ -373,6 +389,8 @@ inline complex<double> colored_tau_integration(
 					double k)
 {
 	complex<double> locsum(0,0);
+
+	double sign_factor = 1.0-2.0*double(subtract_self_correlations);
 	
 	const int n_x_pts = 201;	//try this
 	double * x_pts = new double [n_x_pts];
@@ -400,17 +418,19 @@ inline complex<double> colored_tau_integration(
 			//check if we want to subtract self-correlations
 			double GG_self_corr = 0.0;
 			if (subtract_self_correlations)
-				GG_self_corr = GG_self_correlations(k, tX_loc, tY_loc)
+				GG_self_corr = GG_self_correlations(k, tX_loc, tY_loc);
 
 			double TY_loc = interpolate1D(tau_pts, T_pts, tY_loc, n_tau_pts, 0, false, 2);
 			double sY_loc = s_vs_T(TY_loc);
 			complex<double> factor_Y = sY_loc * (*Gtilde_Y)(-k, tauf, tY_loc);	//extra factor of entropy!!!
+//cout << "CHECK: " << tX_loc << "   " << tY_loc << "   " << TY_loc << "   " << sY_loc << "   " << (*Gtilde_Y)(-k, tauf, tY_loc) << "   " << factor_Y << endl;
 
 			double min_tp_tpp = min(tX_loc, tY_loc);
 			double eta_at_min_tp_tpp = interpolate1D(tau_pts, running_integral_array, min_tp_tpp, n_tau_pts, 0, false, 2);
 
 			double sum_XY = exp(-abs(tX_loc - tY_loc) / tauQ) * eta_at_min_tp_tpp / (2.0*tauQ);
-			sum_X += hw_loc * x_wts[ix] * ( factor_X * factor_Y - GG_self_corr ) * sum_XY;
+//cout << "CHECK: " << itp << "   " << ix << "   " << sign_factor << "   " << factor_X << "   " << factor_Y << "   " << GG_self_corr << "   " << sum_XY << endl;
+			sum_X += hw_loc * x_wts[ix] * sign_factor * ( factor_X * factor_Y - GG_self_corr ) * sum_XY;
 		}
 		locsum += tau_wts[itp] * sum_X;
 	}
@@ -427,6 +447,7 @@ inline complex<double> Ctilde_n_n(double k)
 	if ( white_noise )
 		sum = tau_integration(Gtilde_n_white, Gtilde_n_white, k);
 	else
+		//sum = colored_tau_integration(Gtilde_n_white, Gtilde_n_white, k);
 		sum = colored_tau_integration(Gtilde_n_color, Gtilde_n_color, k);
 
 	return ( sum / (tauf*tauf) );	//fm^2; note that we must include extra factor of tauf^-2 for consistency with manuscript
