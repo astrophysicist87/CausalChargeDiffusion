@@ -362,8 +362,10 @@ long binarySearch(double * A, int length, double value, bool skip_out_of_range /
 ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////
 
-complex<double> Hypergeometric0F1(complex<double> a, complex<double> z)
+complex<double> Hypergeometric0F1(complex<double> a_in, complex<double> z_in)
 {
+	complex<double> a = a_in, z = z_in;
+
 	complex<double> sum = 0.0, oldsum = 0.0;
 	complex<double> term = 1.0;
 	long int i = 0;
@@ -376,12 +378,15 @@ complex<double> Hypergeometric0F1(complex<double> a, complex<double> z)
 		a += 1.0;
 		++i;
 	} while (2.0*abs(sum-oldsum)/abs(sum+oldsum) >= tolerance);
-	//cout << "Hypergeometric0F1(" << a << ", " << z << ") = " << sum << endl;
+	//cout << setw(15) << setprecision(12) << "Hypergeometric0F1: " << a_in.real() << "   " << a_in.imag()
+	//		<< "   " << z_in.real() << "   " << z_in.imag() << "   " << sum.real() << "   " << sum.imag() << endl;
 	return (sum);
 }
 
-complex<double> Hypergeometric1F1(complex<double> a, complex<double> b, complex<double> z)
+complex<double> Hypergeometric1F1(complex<double> a_in, complex<double> b_in, complex<double> z_in)
 {
+	complex<double> a = a_in, b = b_in, z = z_in;
+
 	complex<double> sum = 0.0, oldsum = 0.0;
 	complex<double> term = 1.0;
 	long int i = 0;
@@ -397,9 +402,9 @@ complex<double> Hypergeometric1F1(complex<double> a, complex<double> b, complex<
 		++i;
 	} while (2.0*abs(sum-oldsum)/abs(sum+oldsum) >= tolerance);
 	//cout << "Convergence reached at counter = " << i << "!" << endl;
-	//cout << "Hypergeometric1F1(" << a << ", " << b << ", " << z << ") = " << sum << endl;
+	//cout << setw(15) << setprecision(12) << "Hypergeometric1F1: " << a_in.real() << "   " << a_in.imag() << "   " << b_in.real() << "   " << b_in.imag()
+	//		<< "   " << z_in.real() << "   " << z_in.imag() << "   " << sum.real() << "   " << sum.imag() << endl;
 	return (sum);
 }
-
 
 //End of file
