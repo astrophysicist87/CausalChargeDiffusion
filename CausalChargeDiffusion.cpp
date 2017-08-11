@@ -22,7 +22,7 @@ int particle_to_study;
 
 const double hbarC = 197.33;
 const double Cem = 2.0 / 3.0;	//my current best guess
-const double k_infinity = 10.0;
+const double k_infinity = 100.0;
 const double xi_infinity = 5.0;
 const int n_Dy = 51;
 
@@ -45,7 +45,7 @@ double A0, A2, A4, C0, B, mui, muf, xi0, xibar0, etaBYs, RD, sPERn, Nf, qD, si, 
 double a_at_tauf, vs2_at_tauf, vn2_at_tauf, vsigma2_at_tauf;
 
 const int n_xi_pts = 51;
-const int n_k_pts = 50;	//# of k points should be even to avoid poles in 1F1, etc.!!!
+const int n_k_pts = 500;	//# of k points should be even to avoid poles in 1F1, etc.!!!
 const int n_tau_pts = 51;
 double * xi_pts_minf_inf, * xi_wts_minf_inf;
 double * k_pts, * k_wts;
@@ -161,9 +161,38 @@ int main(int argc, char *argv[])
 	vector<complex<double> > Ftn_particle1_vec, Ftn_particle2_vec;
 	vector<complex<double> > Ctnn_vec;
 
+//////////////////////////////////////////////////////////
 //	for (int ixi = 0; ixi < n_xi_pts; ++ixi)
 //		cout << xi_pts_minf_inf[ixi] << "   " << Fn(xi_pts_minf_inf[ixi], &particle1) << "   " << Fn(xi_pts_minf_inf[ixi], &particle1) << endl;
 //if (1) return (0);
+
+//check that self-correlations actually subtract off the right part...
+//do it for single G_tilde first...
+/*for (int ik = 0; ik < n_k_pts; ++ik)
+{
+	double k = k_pts[ik];
+	complex<double> GX = Gtilde_n_color(k, tauf, 0.5*tauf);	//just choose a time
+	complex<double> asympGX = asymptotic_Gtilde_n_color(k, tauf, 0.5*tauf);	//just choose a time
+	cout << "SANITY CHECK: " << k << "   " << GX.real() << "   " << GX.imag() << "   " << asympGX.real() << "   " << asympGX.imag() << endl;
+}
+if (1) return (0);*/
+
+//then for product...
+for (int ik = 0; ik < n_k_pts; ++ik)
+{
+	double k = k_pts[ik];
+	complex<double> GX = Gtilde_n_color(k, tauf, 0.5*tauf);	//just choose a time
+	complex<double> GY = Gtilde_n_color(-k, tauf, 0.5*tauf);	//just choose a time
+	complex<double> GXY = GX*GY;
+	double GXY_self_corr = GG_self_correlations(k, 0.5*tauf, 0.5*tauf);
+	complex<double> GXY_no_corr = GX*GY - GXY_self_corr;
+	//double GXY_self_corr = 2.0*GG_self_correlations(k, tauf, 0.5*tauf)/k;
+	//complex<double> GXY_no_corr = GX*GY - GXY_self_corr*GXY_self_corr;
+	cout << "SANITY CHECK: " << k << "   " << GXY.real() << "   " << GXY.imag() << "   " << GXY_self_corr
+			<< "   " << GXY_no_corr.real() << "   " << GXY_no_corr.imag() << endl;
+}
+if (1) return (0);
+//////////////////////////////////////////////////////////
 
 	for (int ik = 0; ik < n_k_pts; ++ik)
 	{

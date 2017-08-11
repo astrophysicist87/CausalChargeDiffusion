@@ -264,6 +264,7 @@ inline double B2(double x, double xp)
 			);
 }
 
+/*
 inline double GG_self_correlations(double k, double tau1p, double tau2p)
 {
 	double xf = tauf / tauQ;
@@ -274,14 +275,17 @@ inline double GG_self_correlations(double k, double tau1p, double tau2p)
 						/ (2.0*vQ2);
 	double vQ = sqrt(vQ2);
 	double arg = vQ * k * log(tau2p/tau1p);
+	//double arg = sqrt(vQ2*k*k-0.25) * log(tau2p/tau1p);
 
 	double B1_xf_x1p = B1(xf, x1p);
 	double B1_xf_x2p = B1(xf, x2p);
 	double B2_xf_x1p = B2(xf, x1p);
 	double B2_xf_x2p = B2(xf, x2p);
 
-	double C1 = vQ2*k*k + B1_xf_x1p * B1_xf_x2p - B2_xf_x1p - B2_xf_x2p;
+	double C1 = vQ2 * k * k + B1_xf_x1p * B1_xf_x2p - B2_xf_x1p - B2_xf_x2p;
 	double C2 = vQ * k * (B1_xf_x1p - B1_xf_x2p);
+	//double C1 = (vQ2*k*k-0.25) + B1_xf_x1p * B1_xf_x2p - B2_xf_x1p - B2_xf_x2p;
+	//double C2 = sqrt(vQ2*k*k-0.25) * (B1_xf_x1p - B1_xf_x2p);
 
 	//cout << "CHECK: " << k << "   " << tau1p << "   " << tau2p << "   " << prefactor * ( C1 * cos(arg) + C2 * sin(arg) ) << endl;
 
@@ -289,6 +293,32 @@ inline double GG_self_correlations(double k, double tau1p, double tau2p)
 				prefactor * ( C1 * cos(arg) + C2 * sin(arg) )
 			);
 }
+*/
+
+inline double GG_self_correlations(double k, double tau1p, double tau2p)
+{
+	double xf = tauf / tauQ;
+	double x1p = tau1p / tauQ;
+	double x2p = tau2p / tauQ;
+	double prefactor = sqrt( tau1p*tau2p / (tauf*tauf) )
+						* exp( 0.5 * (x1p + x2p) - xf )
+						/ (vQ2*vQ2*k*k);
+	double vQ = sqrt(vQ2);
+
+	double B1_xf_x1p = B1(xf, x1p);
+	double B1_xf_x2p = B1(xf, x2p);
+	double B2_xf_x1p = B2(xf, x1p);
+	double B2_xf_x2p = B2(xf, x2p);
+
+	double arg1 = k*vQ*log(xf/x1p);
+	double arg2 = k*vQ*log(xf/x2p);
+
+	double factor1 = ( k*k*vQ2 - B2_xf_x1p ) * cos(arg1) + k*vQ*B1_xf_x1p * sin(arg1);
+	double factor2 = ( k*k*vQ2 - B2_xf_x2p ) * cos(arg2) + k*vQ*B1_xf_x2p * sin(arg2);
+
+	return ( prefactor*factor1*factor2 );
+}
+
 
 inline double mediumN(double tau_loc)
 {
@@ -333,6 +363,26 @@ inline complex<double> Gtilde_n_color(double k, double tau, double taup)
 	//		<< i * k * numerator / denominator << endl;
 
 	return ( i * k * regulated_result ); //dimensionless
+}
+
+inline complex<double> asymptotic_Gtilde_n_color(double k, double tau, double taup)
+{
+	double x = tau / tauQ;
+	double xp = taup / tauQ;
+	double prefactor = sqrt( taup / tauf )
+						* exp( 0.5 * (xp - x) );
+	double lambda = sqrt(k*k*vQ2 - 0.25);
+	double vQ = sqrt(vQ2);
+
+	double B1_x_xp = B1(x, xp);
+	double B2_x_xp = B2(x, xp);
+	double arg = k*vQ*log(x/xp);
+	//double arg = lambda*log(xp/x);
+
+	double mainfactor = cos(arg) + (B1_x_xp / (k*vQ)) * sin(arg) - (B2_x_xp / (k*k*vQ2)) * cos(arg);
+	//double mainfactor = cos(arg) + (B1_x_xp / lambda) * sin(arg) - (B2_x_xp / (lambda*lambda)) * cos(arg);
+
+	return ( i*k*prefactor*mainfactor );
 }
 
 inline complex<double> tau_integration(complex<double> (*Gtilde_X)(double, double, double), complex<double> (*Gtilde_Y)(double, double, double), double k)
