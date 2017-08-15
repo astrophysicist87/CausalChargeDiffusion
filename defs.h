@@ -37,7 +37,8 @@ inline int sgn(T val) {
 string truestring = "true";
 string falsestring = "false";
 
-bool white_noise = false;
+bool white_noise = true;
+bool white_Green = true;
 bool subtract_self_correlations = false;
 
 inline string return_boolean_string(bool test){return (test ? truestring : falsestring);}
@@ -180,7 +181,6 @@ inline double Fn(double x, void * p)
 	double cx = cosh(x);
 	
 	double c1 = 0.0;
-	//double c2 = sf * chi_tilde_T_T;
 	double c2 = chi_tilde_T_T;
 
 	double mByT = (params->mass) / Tf;
@@ -207,7 +207,6 @@ inline complex<double> psi_minus(complex<double> k, complex<double> x)
 {
 	complex<double> one_fourth = 0.25;
 	complex<double> mlambda = -sqrt(one_fourth - vQ2*k*k);
-//cout << "psi_minus(" << k << ", " << x << "): " << Hypergeometric1F1(mlambda+1.5, 2.0*mlambda+1.0, x) << endl;
 	return (
 			pow(x,mlambda-0.5)
 			* exp(-x) * Hypergeometric1F1(mlambda+1.5, 2.0*mlambda+1.0, x)
@@ -229,9 +228,6 @@ inline complex<double> psi_dot_minus(complex<double> k, complex<double> x)
 	complex<double> one_fourth = 0.25;
 	complex<double> mlambda = -sqrt(one_fourth - vQ2*k*k);
 	complex<double> tmp = Hypergeometric1F1(mlambda+0.5, 2.0*mlambda+1.0, x);
-//cout << "psi_dot_minus: " << k.real() << "   " << k.imag() << "   " << x.real() << "   " << x.imag() << "   "
-//		<< mlambda.real() << "   " << mlambda.imag() << "   "
-//		<< tmp.real() << "   " << tmp.imag() << endl;
 	return (
 			0.5 * (2.0*mlambda-1.0) * pow(x,mlambda-1.5)
 			* exp(-x) * Hypergeometric1F1(mlambda+0.5, 2.0*mlambda+1.0, x)
@@ -278,7 +274,6 @@ inline double B2(double x, double xp)
 			);
 }
 
-
 inline double GG_self_correlations(double k, double tau1p, double tau2p)
 {
 	double xf = tauf / tauQ;
@@ -304,32 +299,6 @@ inline double GG_self_correlations(double k, double tau1p, double tau2p)
 				prefactor * ( C1 * cos(arg) + C2 * sin(arg) )
 			);
 }
-
-/*
-inline double GG_self_correlations(double k, double tau1p, double tau2p)
-{
-	double xf = tauf / tauQ;
-	double x1p = tau1p / tauQ;
-	double x2p = tau2p / tauQ;
-	double prefactor = sqrt( tau1p*tau2p / (tauf*tauf) )
-						* exp( 0.5 * (x1p + x2p) - xf )
-						/ (vQ2*vQ2*k*k);
-	double vQ = sqrt(vQ2);
-
-	double B1_xf_x1p = B1(xf, x1p);
-	double B1_xf_x2p = B1(xf, x2p);
-	double B2_xf_x1p = B2(xf, x1p);
-	double B2_xf_x2p = B2(xf, x2p);
-
-	double arg1 = k*vQ*log(xf/x1p);
-	double arg2 = k*vQ*log(xf/x2p);
-
-	double factor1 = ( k*k*vQ2 - B2_xf_x1p ) * cos(arg1) + k*vQ*B1_xf_x1p * sin(arg1);
-	double factor2 = ( k*k*vQ2 - B2_xf_x2p ) * cos(arg2) + k*vQ*B1_xf_x2p * sin(arg2);
-
-	return ( prefactor*factor1*factor2 );
-}
-*/
 
 inline double mediumN(double tau_loc)
 {
@@ -366,9 +335,8 @@ inline complex<double> asymptotic_Gtilde_n_color(double k, double tau, double ta
 	return ( i*k*prefactor*mainfactor );
 }
 
-inline complex<double> Gtilde_n_color(double k, double tau, double taup)
+inline complex<double> Gtilde_n_color(double k, double tau, double taup, bool regulate_with_asymptotics)
 {
-	const double epsilon = 1.e-100;
 	double xp = taup / tauQ;
 	complex<double> one_fourth = 0.25;
 	complex<double> lambda = sqrt(one_fourth - vQ2*k*k);
@@ -380,51 +348,27 @@ inline complex<double> Gtilde_n_color(double k, double tau, double taup)
 	complex<double> psi_dot_plus_at_taup = psi_dot_plus(k, taup / tauQ);
 	complex<double> psi_dot_minus_at_taup = psi_dot_minus(k, taup / tauQ);
 
-	double exp_factor = exp((tau+taup)/tauQ);
-
 	complex<double> n1 = psi_plus_at_tau * psi_dot_minus_at_taup;
 	complex<double> n2 = psi_minus_at_tau * psi_dot_plus_at_taup;
 	complex<double> numerator = n1 - n2;
-	//complex<double> denominator = psi_plus_at_taup * psi_dot_minus_at_taup - psi_minus_at_taup * psi_dot_plus_at_taup;
 	complex<double> denominator = -2.0 * lambda * exp(-xp) / (xp*xp);
 
 	complex<double> result = numerator / denominator;
 
-	if ( abs(denominator) < 1.e-15 && abs(numerator) < 1.e-15
-			//&& abs(n1-n2) < 1.e-15
+	if ( regulate_with_asymptotics
+			&& abs(denominator) < 1.e-15 && abs(numerator) < 1.e-15
 			&& 2.0*abs(n1-n2)/( abs(n1)+abs(n2) ) < 1.e-10 )
 	{
-		double x = tau/tauQ;
-		numerator = (k*k*k*k*vQ2*vQ2 + 2.0*k*k*vQ2*x + 2.0*x*x)*(xp-k*k*vQ2) - 2.0*exp(xp-x)*(xp+k*k*vQ2);
-		denominator = 2.0*x*x*xp;
-		//cout << "MAGS: " << taup << "   " << k << "   " << abs(n1-n2) << "   " << 2.0/( abs(n1)+abs(n2) ) << "   " << 2.0*abs(n1-n2)/( abs(n1)+abs(n2) ) << endl;
-	//cout << setw(25) << setprecision(20) << "Gtilde: "
-	//		<< k << "   " << taup << "   " << n1 << "   " << n2 << "   "
-	//		<< numerator << "   " << denominator << "   " << (i * k * exp(DQ * k * k * ((1.0/tau) - (1.0/taup)) ) ).imag() << endl;
-	//	return ( i*k*numerator/denominator ); //dimensionless
 		result = exp(DQ * k * k * ((1.0/tau) - (1.0/taup)) );
 	}
-
-/*	complex<double> unregulated_result = numerator / denominator;
-	complex<double> regulated_result = (numerator+epsilon) / (denominator+epsilon);
-	if ( abs(unregulated_result - regulated_result) >= 0.5 * 1.e-10 * abs(unregulated_result + regulated_result)
-		or ( not isfinite( unregulated_result.real() ) )
-		or ( not isfinite( unregulated_result.imag() ) ) )
-		cerr << "WARNING: " << psi_plus_at_tau << "   " << psi_minus_at_tau << "   " << psi_plus_at_taup << "   " << psi_minus_at_taup << endl
-				<< "\t\t" << psi_dot_plus_at_taup << "   " << psi_dot_minus_at_taup << endl
-				<< "\t\t" << k << "   " << tau << "   " << taup << endl
-				<< "\t\t" << numerator << "   " << denominator << "   " << unregulated_result << "   " << regulated_result << endl;*/
-
-	//cout << setw(25) << setprecision(20) << "Gtilde: "
-	//		<< k << "   " << taup << "   " << n1 << "   " << n2 << "   "
-	//		<< numerator << "   " << denominator << "   " << (i * k * numerator / denominator ).imag()<< endl;
-
-//cerr << "CHECK: " << k << "   " << tau << "   " << taup << "   " << regulated_result << endl;
 
 	return ( i * k * result ); //dimensionless
 }
 
-inline complex<double> tau_integration(complex<double> (*Gtilde_X)(double, double, double), complex<double> (*Gtilde_Y)(double, double, double), double k)
+inline complex<double> tau_integration(
+					complex<double> (*Gtilde_X)(double, double, double),
+					complex<double> (*Gtilde_Y)(double, double, double),
+					double tau_f1, double tau_f2, double k)
 {
 	complex<double> result(0,0);
 	for (int it = 0; it < n_tau_pts; ++it)
@@ -433,14 +377,11 @@ inline complex<double> tau_integration(complex<double> (*Gtilde_X)(double, doubl
 		double T_loc = T_pts[it];
 		double s_loc = s_vs_T(T_loc);
 		double chi_Q = chi_mumu(T_loc);
-//cout << tau_loc << "   " << 2.0 * DQ * chi_Q * T_loc * tau_loc << endl;
 		complex<double> tmp_result = tau_wts[it] * ( 2.0 * DQ * chi_Q * T_loc / tau_loc )
-										* (*Gtilde_X)(k, tauf, tau_loc) * (*Gtilde_Y)(-k, tauf, tau_loc);
+										* (*Gtilde_X)(k, tau_f1, tau_loc) * (*Gtilde_Y)(-k, tau_f2, tau_loc);
 		result += tmp_result;
 	}
 
-//if (1) exit(0);
-//cout << "CHECK: " << k << "   " << result.real() << "   " << result.real() - ( chi_mumu(Tf) * Tf * tauf ) << endl;
 	double self_correlation = 0.0;
 	if (subtract_self_correlations)
 		self_correlation = chi_mumu(Tf) * Tf * tauf;
@@ -448,6 +389,33 @@ inline complex<double> tau_integration(complex<double> (*Gtilde_X)(double, doubl
 	double sign_factor = 1.0-2.0*double(subtract_self_correlations);
 
 	return ( sign_factor * (result - self_correlation) );
+}
+
+inline complex<double> tau_integration(
+					complex<double> (*Gtilde_X)(double, double, double, bool),
+					complex<double> (*Gtilde_Y)(double, double, double, bool),
+					double tau_f1, double tau_f2, double k)
+{
+	complex<double> result(0,0);
+	for (int it = 0; it < n_tau_pts; ++it)
+	{
+		double tau_loc = tau_pts[it];
+		double T_loc = T_pts[it];
+		double s_loc = s_vs_T(T_loc);
+		double chi_Q = chi_mumu(T_loc);
+		double self_correlation = 0.0;
+		if (subtract_self_correlations)
+			self_correlation = GG_self_correlations(k, tau_loc, tau_loc);
+
+		complex<double> tmp_result = tau_wts[it] * ( 2.0 * DQ * chi_Q * T_loc / tau_loc ) *
+										( (*Gtilde_X)(k, tau_f1, tau_loc, true) * (*Gtilde_Y)(-k, tau_f2, tau_loc, true) - self_correlation );
+		result += tmp_result;
+	}
+
+	//double sign_factor = 1.0-2.0*double(subtract_self_correlations);
+	double sign_factor = 1.0;
+
+	return ( sign_factor * result );
 }
 
 inline void set_running_transport_integral(double * run_int_array)
@@ -480,9 +448,9 @@ inline void set_running_transport_integral(double * run_int_array)
 }
 
 inline complex<double> colored_tau_integration(
-					complex<double> (*Gtilde_X)(double, double, double),
-					complex<double> (*Gtilde_Y)(double, double, double),
-					double k)
+					complex<double> (*Gtilde_X)(double, double, double, bool),
+					complex<double> (*Gtilde_Y)(double, double, double, bool),
+					double tau_f1, double tau_f2, double k)
 {
 	complex<double> locsum(0,0);
 
@@ -500,7 +468,7 @@ inline complex<double> colored_tau_integration(
 		double tX_loc = tau_pts[itp];
 		double TX_loc = T_pts[itp];
 		double sX_loc = s_vs_T(TX_loc);
-		complex<double> factor_X = sX_loc * (*Gtilde_X)(k, tauf, tX_loc);		//extra factor of entropy!!!
+		complex<double> factor_X = sX_loc * (*Gtilde_X)(k, tauf, tX_loc, true);		//extra factor of entropy!!!
 
 		double tau_lower = max(taui, tX_loc + delta_tau_lower);			//if lower limit goes before beginning of lifetime, just start at tau0
 		double tau_upper = min(tauf, tX_loc + delta_tau_upper);			//if upper limit goes past end of lifetime, just end at tauf
@@ -519,8 +487,8 @@ inline complex<double> colored_tau_integration(
 			if (subtract_self_correlations)
 				GG_self_corr = sX_loc * sY_loc * GG_self_correlations(k, tX_loc, tY_loc);
 
-			complex<double> factor_Y = sY_loc * (*Gtilde_Y)(-k, tauf, tY_loc);	//extra factor of entropy!!!
-//cout << "CHECK: " << tX_loc << "   " << tY_loc << "   " << TY_loc << "   " << sY_loc << "   " << (*Gtilde_Y)(-k, tauf, tY_loc) << "   " << factor_Y << endl;
+			complex<double> factor_Y = sY_loc * (*Gtilde_Y)(-k, tauf, tY_loc, true);	//extra factor of entropy!!!
+//cout << "CHECK: " << tX_loc << "   " << tY_loc << "   " << TY_loc << "   " << sY_loc << "   " << (*Gtilde_Y)(-k, tauf, tY_loc, true) << "   " << factor_Y << endl;
 
 			double min_tp_tpp = min(tX_loc, tY_loc);
 			double eta_at_min_tp_tpp = interpolate1D(tau_pts, running_integral_array, min_tp_tpp, n_tau_pts, 0, false, 2);
@@ -540,16 +508,21 @@ inline complex<double> colored_tau_integration(
 	return (locsum);
 }
 
-inline complex<double> Ctilde_n_n(double k)
+inline complex<double> Ctilde_n_n(double k, double tau_f1, double tau_f2)	//allows to calculate at other points
 {
 	complex<double> sum(0,0);
-	if ( white_noise )
-		sum = tau_integration(Gtilde_n_white, Gtilde_n_white, k);
+	if ( white_Green )
+	{
+		if ( white_noise )
+			sum = tau_integration(Gtilde_n_white, Gtilde_n_white, k, tau_f1, tau_f2);
+		else
+			sum = tau_integration(Gtilde_n_color, Gtilde_n_color, k, tau_f1, tau_f2);
+	}
 	else
-		//sum = colored_tau_integration(Gtilde_n_white, Gtilde_n_white, k);
-		sum = colored_tau_integration(Gtilde_n_color, Gtilde_n_color, k);
+		//sum = colored_tau_integration(Gtilde_n_white, Gtilde_n_white, k, tau_f1, tau_f2);
+		sum = colored_tau_integration(Gtilde_n_color, Gtilde_n_color, k, tau_f1, tau_f2);
 
-	return ( sum / (tauf*tauf) );	//fm^2; note that we must include extra factor of tauf^-2 for consistency with manuscript
+	return ( sum / (tau_f1*tau_f2) );	//fm^2; note that we must include extra factor of tauf^-2 for consistency with manuscript
 }
 
 ////////////////////////////////////////////////////////////////////////////////

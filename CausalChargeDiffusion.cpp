@@ -21,7 +21,7 @@ using namespace std;
 int particle_to_study;
 
 const double hbarC = 197.33;
-const double Cem = 2.0 / 3.0;	//my current best guess
+//const double Cem = 2.0 / 3.0;	//my current best guess
 //const double k_infinity = 10.0;
 const double xi_infinity = 5.0;
 const int n_Dy = 51;
@@ -29,7 +29,7 @@ const int n_Dy = 51;
 //const double tauC = 0.5;	//fm/c
 const double DQ = 0.162035;	//fm (rough estimate!)
 //const double vQ2 = DQ/tauQ;	//N.B. - must have tauQ > DQ for sub-luminal speed!
-const double vQ2 = 0.9;
+const double vQ2 = 1.0/3.0;
 const double tauC = DQ/vQ2;
 const double tauQ = tauC;	//for consistency with manuscript
 
@@ -224,8 +224,22 @@ for (int ik = 0; ik < n_k_pts; ++ik)
 	double k = k_pts[ik];
 	//double tau = taui + double(it)*(tauf-taui)/double(200);
 	double tau = tau_pts[it];
-	complex<double> GX = Gtilde_n_color(k, tauf, tau);	//just choose a time
-	cout << setw(25) << setprecision(20) << "SANITY CHECK: " << k << "   " << tau << "   " << GX.real() << "   " << GX.imag() << endl;
+	complex<double> GX = Gtilde_n_color(k, tauf, tau, true);
+	complex<double> GX_unreg = Gtilde_n_color(k, tauf, tau, false);
+	cout << setw(25) << setprecision(20) << "Gtilde: " << k << "   " << tau << "   "
+			<< GX_unreg.real() << "   " << GX_unreg.imag() << "   " << GX.real() << "   " << GX.imag() << endl;
+}
+if (1) return (0);*/
+/*for (int it1 = 0; it1 < n_tau_pts; ++it1)
+for (int it2 = 0; it2 < n_tau_pts; ++it2)
+{
+	double k = k_pts[(n_k_pts+1)/2];
+	double tau1 = tau_pts[it1];
+	double tau2 = tau_pts[it2];
+	complex<double> GX = Gtilde_n_color(k, tauf, tau, true);
+	complex<double> GX_unreg = Gtilde_n_color(k, tauf, tau, false);
+	cout << setw(25) << setprecision(20) << "Gtilde: " << k << "   " << tau << "   "
+			<< GX_unreg.real() << "   " << GX_unreg.imag() << "   " << GX.real() << "   " << GX.imag() << endl;
 }
 if (1) return (0);*/
 //////////////////////////////////////////////////////////
@@ -246,7 +260,7 @@ if (1) return (0);*/
 	{
 		double k = k_pts[ik];
 		current_ik = ik;
-		Ctnn_vec.push_back(Ctilde_n_n(k));
+		Ctnn_vec.push_back(Ctilde_n_n(k, tauf, tauf));
 	}
 
 	//start computing actual charge balance functions here
