@@ -28,11 +28,17 @@ void inline debugger(int cln, const char* cfn)
 	return;
 }
 
+
+template <typename T>
+inline int sgn(T val) {
+    return (T(0) < val) - (val < T(0));
+}
+
 string truestring = "true";
 string falsestring = "false";
 
 bool white_noise = false;
-bool subtract_self_correlations = true;
+bool subtract_self_correlations = false;
 
 inline string return_boolean_string(bool test){return (test ? truestring : falsestring);}
 
@@ -189,38 +195,46 @@ inline complex<double> Ftilde_n(double k, void * p)
 
 inline complex<double> psi_plus(complex<double> k, complex<double> x)
 {
-	complex<double> lambda = sqrt(0.25 - vQ2*k*k);
+	complex<double> one_fourth = 0.25;
+	complex<double> lambda = sqrt(one_fourth - vQ2*k*k);
 	return (
-			pow(x,lambda-0.5) * exp(-x)
-			* Hypergeometric1F1(lambda+1.5, 2.0*lambda+1.0, x)
+			pow(x,lambda-0.5)
+			* exp(-x) * Hypergeometric1F1(lambda+1.5, 2.0*lambda+1.0, x)
 			);
 }
 
 inline complex<double> psi_minus(complex<double> k, complex<double> x)
 {
-	complex<double> mlambda = -sqrt(0.25 - vQ2*k*k);
+	complex<double> one_fourth = 0.25;
+	complex<double> mlambda = -sqrt(one_fourth - vQ2*k*k);
 //cout << "psi_minus(" << k << ", " << x << "): " << Hypergeometric1F1(mlambda+1.5, 2.0*mlambda+1.0, x) << endl;
 	return (
-			pow(x,mlambda-0.5) * exp(-x)
-			* Hypergeometric1F1(mlambda+1.5, 2.0*mlambda+1.0, x)
+			pow(x,mlambda-0.5)
+			* exp(-x) * Hypergeometric1F1(mlambda+1.5, 2.0*mlambda+1.0, x)
 			);
 }
 
 inline complex<double> psi_dot_plus(complex<double> k, complex<double> x)
 {
-	complex<double> lambda = sqrt(0.25 - vQ2*k*k);
+	complex<double> one_fourth = 0.25;
+	complex<double> lambda = sqrt(one_fourth - vQ2*k*k);
 	return (
-			0.5 * (2.0*lambda-1.0) * pow(x,lambda-1.5) * exp(-0.5*x)
-			* Hypergeometric0F1(lambda+1.0, x*x/16.0)
+			0.5 * (2.0*lambda-1.0) * pow(x,lambda-1.5)
+			* exp(-x) * Hypergeometric1F1(lambda+0.5, 2.0*lambda+1.0, x)
 			);
 }
 
 inline complex<double> psi_dot_minus(complex<double> k, complex<double> x)
 {
-	complex<double> mlambda = -sqrt(0.25 - vQ2*k*k);
+	complex<double> one_fourth = 0.25;
+	complex<double> mlambda = -sqrt(one_fourth - vQ2*k*k);
+	complex<double> tmp = Hypergeometric1F1(mlambda+0.5, 2.0*mlambda+1.0, x);
+//cout << "psi_dot_minus: " << k.real() << "   " << k.imag() << "   " << x.real() << "   " << x.imag() << "   "
+//		<< mlambda.real() << "   " << mlambda.imag() << "   "
+//		<< tmp.real() << "   " << tmp.imag() << endl;
 	return (
-			0.5 * (2.0*mlambda-1.0) * pow(x,mlambda-1.5) * exp(-0.5*x)
-			* Hypergeometric0F1(mlambda+1.0, x*x/16.0)
+			0.5 * (2.0*mlambda-1.0) * pow(x,mlambda-1.5)
+			* exp(-x) * Hypergeometric1F1(mlambda+0.5, 2.0*mlambda+1.0, x)
 			);
 }
 
@@ -264,7 +278,7 @@ inline double B2(double x, double xp)
 			);
 }
 
-/*
+
 inline double GG_self_correlations(double k, double tau1p, double tau2p)
 {
 	double xf = tauf / tauQ;
@@ -275,7 +289,6 @@ inline double GG_self_correlations(double k, double tau1p, double tau2p)
 						/ (2.0*vQ2);
 	double vQ = sqrt(vQ2);
 	double arg = vQ * k * log(tau2p/tau1p);
-	//double arg = sqrt(vQ2*k*k-0.25) * log(tau2p/tau1p);
 
 	double B1_xf_x1p = B1(xf, x1p);
 	double B1_xf_x2p = B1(xf, x2p);
@@ -284,8 +297,6 @@ inline double GG_self_correlations(double k, double tau1p, double tau2p)
 
 	double C1 = vQ2 * k * k + B1_xf_x1p * B1_xf_x2p - B2_xf_x1p - B2_xf_x2p;
 	double C2 = vQ * k * (B1_xf_x1p - B1_xf_x2p);
-	//double C1 = (vQ2*k*k-0.25) + B1_xf_x1p * B1_xf_x2p - B2_xf_x1p - B2_xf_x2p;
-	//double C2 = sqrt(vQ2*k*k-0.25) * (B1_xf_x1p - B1_xf_x2p);
 
 	//cout << "CHECK: " << k << "   " << tau1p << "   " << tau2p << "   " << prefactor * ( C1 * cos(arg) + C2 * sin(arg) ) << endl;
 
@@ -293,8 +304,8 @@ inline double GG_self_correlations(double k, double tau1p, double tau2p)
 				prefactor * ( C1 * cos(arg) + C2 * sin(arg) )
 			);
 }
-*/
 
+/*
 inline double GG_self_correlations(double k, double tau1p, double tau2p)
 {
 	double xf = tauf / tauQ;
@@ -318,7 +329,7 @@ inline double GG_self_correlations(double k, double tau1p, double tau2p)
 
 	return ( prefactor*factor1*factor2 );
 }
-
+*/
 
 inline double mediumN(double tau_loc)
 {
@@ -337,34 +348,6 @@ inline complex<double> Gtilde_n_white(double k, double tau, double taup)
 	return ( i * k * exp(arg) ); //dimensionless
 }
 
-inline complex<double> Gtilde_n_color(double k, double tau, double taup)
-{
-	const double epsilon = 1.e-100;
-
-	complex<double> psi_plus_at_tau = psi_plus(k, tau / tauQ);
-	complex<double> psi_minus_at_tau = psi_minus(k, tau / tauQ);
-	complex<double> psi_plus_at_taup = psi_plus(k, taup / tauQ);
-	complex<double> psi_minus_at_taup = psi_minus(k, taup / tauQ);
-	complex<double> psi_dot_plus_at_taup = psi_dot_plus(k, taup / tauQ);
-	complex<double> psi_dot_minus_at_taup = psi_dot_minus(k, taup / tauQ);
-
-	complex<double> numerator = psi_plus_at_tau * psi_dot_minus_at_taup - psi_minus_at_tau * psi_dot_plus_at_taup;
-	complex<double> denominator = psi_plus_at_taup * psi_dot_minus_at_taup - psi_minus_at_taup * psi_dot_plus_at_taup;
-
-	complex<double> unregulated_result = numerator / denominator;
-	complex<double> regulated_result = (numerator+epsilon) / (denominator+epsilon);
-	if ( abs(unregulated_result - regulated_result) >= 0.5 * 1.e-10 * abs(unregulated_result + regulated_result)
-		or ( not isfinite( unregulated_result.real() ) )
-		or ( not isfinite( unregulated_result.imag() ) ) )
-		cerr << "WARNING: " << unregulated_result << "   " << regulated_result << endl;
-
-	//cout << "Gtilde: " << psi_plus_at_tau << "   " << psi_minus_at_tau << "   " << psi_plus_at_taup << "   " << psi_minus_at_taup << "   "
-	//		<< psi_dot_plus_at_taup << "   " << psi_dot_minus_at_taup << "   " << numerator << "   " << denominator << "   "
-	//		<< i * k * numerator / denominator << endl;
-
-	return ( i * k * regulated_result ); //dimensionless
-}
-
 inline complex<double> asymptotic_Gtilde_n_color(double k, double tau, double taup)
 {
 	double x = tau / tauQ;
@@ -377,12 +360,68 @@ inline complex<double> asymptotic_Gtilde_n_color(double k, double tau, double ta
 	double B1_x_xp = B1(x, xp);
 	double B2_x_xp = B2(x, xp);
 	double arg = k*vQ*log(x/xp);
-	//double arg = lambda*log(xp/x);
 
 	double mainfactor = cos(arg) + (B1_x_xp / (k*vQ)) * sin(arg) - (B2_x_xp / (k*k*vQ2)) * cos(arg);
-	//double mainfactor = cos(arg) + (B1_x_xp / lambda) * sin(arg) - (B2_x_xp / (lambda*lambda)) * cos(arg);
 
 	return ( i*k*prefactor*mainfactor );
+}
+
+inline complex<double> Gtilde_n_color(double k, double tau, double taup)
+{
+	const double epsilon = 1.e-100;
+	double xp = taup / tauQ;
+	complex<double> one_fourth = 0.25;
+	complex<double> lambda = sqrt(one_fourth - vQ2*k*k);
+
+	complex<double> psi_plus_at_tau = psi_plus(k, tau / tauQ);
+	complex<double> psi_minus_at_tau = psi_minus(k, tau / tauQ);
+	complex<double> psi_plus_at_taup = psi_plus(k, taup / tauQ);
+	complex<double> psi_minus_at_taup = psi_minus(k, taup / tauQ);
+	complex<double> psi_dot_plus_at_taup = psi_dot_plus(k, taup / tauQ);
+	complex<double> psi_dot_minus_at_taup = psi_dot_minus(k, taup / tauQ);
+
+	double exp_factor = exp((tau+taup)/tauQ);
+
+	complex<double> n1 = psi_plus_at_tau * psi_dot_minus_at_taup;
+	complex<double> n2 = psi_minus_at_tau * psi_dot_plus_at_taup;
+	complex<double> numerator = n1 - n2;
+	//complex<double> denominator = psi_plus_at_taup * psi_dot_minus_at_taup - psi_minus_at_taup * psi_dot_plus_at_taup;
+	complex<double> denominator = -2.0 * lambda * exp(-xp) / (xp*xp);
+
+	complex<double> result = numerator / denominator;
+
+	if ( abs(denominator) < 1.e-15 && abs(numerator) < 1.e-15
+			//&& abs(n1-n2) < 1.e-15
+			&& 2.0*abs(n1-n2)/( abs(n1)+abs(n2) ) < 1.e-10 )
+	{
+		double x = tau/tauQ;
+		numerator = (k*k*k*k*vQ2*vQ2 + 2.0*k*k*vQ2*x + 2.0*x*x)*(xp-k*k*vQ2) - 2.0*exp(xp-x)*(xp+k*k*vQ2);
+		denominator = 2.0*x*x*xp;
+		//cout << "MAGS: " << taup << "   " << k << "   " << abs(n1-n2) << "   " << 2.0/( abs(n1)+abs(n2) ) << "   " << 2.0*abs(n1-n2)/( abs(n1)+abs(n2) ) << endl;
+	//cout << setw(25) << setprecision(20) << "Gtilde: "
+	//		<< k << "   " << taup << "   " << n1 << "   " << n2 << "   "
+	//		<< numerator << "   " << denominator << "   " << (i * k * exp(DQ * k * k * ((1.0/tau) - (1.0/taup)) ) ).imag() << endl;
+	//	return ( i*k*numerator/denominator ); //dimensionless
+		result = exp(DQ * k * k * ((1.0/tau) - (1.0/taup)) );
+	}
+
+/*	complex<double> unregulated_result = numerator / denominator;
+	complex<double> regulated_result = (numerator+epsilon) / (denominator+epsilon);
+	if ( abs(unregulated_result - regulated_result) >= 0.5 * 1.e-10 * abs(unregulated_result + regulated_result)
+		or ( not isfinite( unregulated_result.real() ) )
+		or ( not isfinite( unregulated_result.imag() ) ) )
+		cerr << "WARNING: " << psi_plus_at_tau << "   " << psi_minus_at_tau << "   " << psi_plus_at_taup << "   " << psi_minus_at_taup << endl
+				<< "\t\t" << psi_dot_plus_at_taup << "   " << psi_dot_minus_at_taup << endl
+				<< "\t\t" << k << "   " << tau << "   " << taup << endl
+				<< "\t\t" << numerator << "   " << denominator << "   " << unregulated_result << "   " << regulated_result << endl;*/
+
+	//cout << setw(25) << setprecision(20) << "Gtilde: "
+	//		<< k << "   " << taup << "   " << n1 << "   " << n2 << "   "
+	//		<< numerator << "   " << denominator << "   " << (i * k * numerator / denominator ).imag()<< endl;
+
+//cerr << "CHECK: " << k << "   " << tau << "   " << taup << "   " << regulated_result << endl;
+
+	return ( i * k * result ); //dimensionless
 }
 
 inline complex<double> tau_integration(complex<double> (*Gtilde_X)(double, double, double), complex<double> (*Gtilde_Y)(double, double, double), double k)
@@ -447,7 +486,8 @@ inline complex<double> colored_tau_integration(
 {
 	complex<double> locsum(0,0);
 
-	double sign_factor = 1.0-2.0*double(subtract_self_correlations);
+	//double sign_factor = 1.0-2.0*double(subtract_self_correlations);
+	double sign_factor = 1.0;
 	
 	const int n_x_pts = 201;	//try this
 	double * x_pts = new double [n_x_pts];
@@ -471,14 +511,14 @@ inline complex<double> colored_tau_integration(
 		for (int ix = 0; ix < n_x_pts; ++ix)
 		{
 			double tY_loc = cen_loc + hw_loc * x_pts[ix];
+			double TY_loc = interpolate1D(tau_pts, T_pts, tY_loc, n_tau_pts, 0, false, 2);
+			double sY_loc = s_vs_T(TY_loc);
 
 			//check if we want to subtract self-correlations
 			double GG_self_corr = 0.0;
 			if (subtract_self_correlations)
-				GG_self_corr = GG_self_correlations(k, tX_loc, tY_loc);
+				GG_self_corr = sX_loc * sY_loc * GG_self_correlations(k, tX_loc, tY_loc);
 
-			double TY_loc = interpolate1D(tau_pts, T_pts, tY_loc, n_tau_pts, 0, false, 2);
-			double sY_loc = s_vs_T(TY_loc);
 			complex<double> factor_Y = sY_loc * (*Gtilde_Y)(-k, tauf, tY_loc);	//extra factor of entropy!!!
 //cout << "CHECK: " << tX_loc << "   " << tY_loc << "   " << TY_loc << "   " << sY_loc << "   " << (*Gtilde_Y)(-k, tauf, tY_loc) << "   " << factor_Y << endl;
 
@@ -488,6 +528,8 @@ inline complex<double> colored_tau_integration(
 			double sum_XY = exp(-abs(tX_loc - tY_loc) / tauQ) * eta_at_min_tp_tpp / (2.0*tauQ);
 //cout << "CHECK: " << itp << "   " << ix << "   " << sign_factor << "   " << factor_X << "   " << factor_Y << "   " << GG_self_corr << "   " << sum_XY << endl;
 			sum_X += hw_loc * x_wts[ix] * sign_factor * ( factor_X * factor_Y - GG_self_corr ) * sum_XY;
+			complex<double> factorXY = factor_X * factor_Y;
+//cout << "CHECK: " << k << "   " << factorXY.real() << "   " << factorXY.imag() << "   " << GG_self_corr << endl;
 		}
 		locsum += tau_wts[itp] * sum_X;
 	}

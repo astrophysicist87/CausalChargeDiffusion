@@ -11,6 +11,10 @@
 
 #include <gsl/gsl_integration.h>
 
+//#include "./special_function_library/cmlib/cmlib.h"
+#include "./special_function_library/cmlib/complex.h"
+#include "./special_function_library/cmlib/protom.h"
+
 using namespace std;
 
 const double tolerance = 1.e-15;
@@ -45,7 +49,9 @@ long binarySearch(double * A, int length, double value,
 // special functions
 //////////////////////////////////
 
-complex<double> Hypergeometric0F1(complex<double> a, complex<double> z);
+//complex<double> Hypergeometric0F1(complex<double> a, complex<double> z);
 complex<double> Hypergeometric1F1(complex<double> a, complex<double> b, complex<double> z);
+//complex<double> SFL_Hypergeometric0F1(complex<double> a, complex<double> z);
+complex<double> SFL_Hypergeometric1F1(complex<double> a, complex<double> b, complex<double> z);
 
 #endif

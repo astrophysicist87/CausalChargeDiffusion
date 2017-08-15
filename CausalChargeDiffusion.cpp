@@ -22,16 +22,19 @@ int particle_to_study;
 
 const double hbarC = 197.33;
 const double Cem = 2.0 / 3.0;	//my current best guess
-const double k_infinity = 100.0;
+//const double k_infinity = 10.0;
 const double xi_infinity = 5.0;
 const int n_Dy = 51;
 
 //const double tauC = 0.5;	//fm/c
 const double DQ = 0.162035;	//fm (rough estimate!)
 //const double vQ2 = DQ/tauQ;	//N.B. - must have tauQ > DQ for sub-luminal speed!
-const double vQ2 = 1.0/3.0;
+const double vQ2 = 0.9;
 const double tauC = DQ/vQ2;
 const double tauQ = tauC;	//for consistency with manuscript
+
+const double k_critical = 0.5 / sqrt(vQ2);
+const double k_infinity = 10.0;
 
 long n_interp;
 
@@ -45,7 +48,7 @@ double A0, A2, A4, C0, B, mui, muf, xi0, xibar0, etaBYs, RD, sPERn, Nf, qD, si, 
 double a_at_tauf, vs2_at_tauf, vn2_at_tauf, vsigma2_at_tauf;
 
 const int n_xi_pts = 51;
-const int n_k_pts = 500;	//# of k points should be even to avoid poles in 1F1, etc.!!!
+const int n_k_pts = 50;	//# of k points should be even to avoid poles in 1F1, etc.!!!
 const int n_tau_pts = 51;
 double * xi_pts_minf_inf, * xi_wts_minf_inf;
 double * k_pts, * k_wts;
@@ -64,6 +67,13 @@ int main(int argc, char *argv[])
 	fraction_of_evolution = 1.0;
 
 	set_phase_diagram_and_EOS_parameters();
+
+	/*const int n_x_pts = 50;
+	vector<double> x_pts, x_wts;
+	int tmp2 = gauss_quadrature(n_x_pts, 6, 0.0, 0.0, 0.0, k_critical/(double)n_x_pts, x_pts, x_wts);
+	for (int ix = 0; ix < n_x_pts; ++ix)
+		cout << x_pts[ix] << "   " << x_wts[ix] << endl;
+	if (1) return (0);*/
 
 	//other constants
 	double Delta_y_step = 0.1;
@@ -178,20 +188,46 @@ int main(int argc, char *argv[])
 if (1) return (0);*/
 
 //then for product...
-for (int ik = 0; ik < n_k_pts; ++ik)
+/*for (int ik = 0; ik < n_k_pts; ++ik)
 {
 	double k = k_pts[ik];
-	complex<double> GX = Gtilde_n_color(k, tauf, 0.5*tauf);	//just choose a time
-	complex<double> GY = Gtilde_n_color(-k, tauf, 0.5*tauf);	//just choose a time
+	complex<double> GX = Gtilde_n_color(k, tauf, 0.15*tauf);	//just choose a time
+	complex<double> GY = Gtilde_n_color(-k, tauf, 0.65*tauf);	//just choose a time
 	complex<double> GXY = GX*GY;
-	double GXY_self_corr = GG_self_correlations(k, 0.5*tauf, 0.5*tauf);
+	double GXY_self_corr = GG_self_correlations(k, 0.15*tauf, 0.65*tauf);
 	complex<double> GXY_no_corr = GX*GY - GXY_self_corr;
 	//double GXY_self_corr = 2.0*GG_self_correlations(k, tauf, 0.5*tauf)/k;
 	//complex<double> GXY_no_corr = GX*GY - GXY_self_corr*GXY_self_corr;
 	cout << "SANITY CHECK: " << k << "   " << GXY.real() << "   " << GXY.imag() << "   " << GXY_self_corr
 			<< "   " << GXY_no_corr.real() << "   " << GXY_no_corr.imag() << endl;
 }
+if (1) return (0);*/
+/*
+for (int ik = 0; ik < n_k_pts; ++ik)
+for (int it = 0; it < n_tau_pts; ++it)
+{
+	complex<double> k = k_pts[ik];
+	complex<double> x = tau_pts[it] / tauQ;
+	complex<double> lambda = sqrt(0.25 - vQ2*k*k);
+	complex<double> mlambda = -sqrt(0.25 - vQ2*k*k);
+
+	complex<double> result1 = SFL_Hypergeometric1F1(lambda+0.5, 2.0*lambda+1.0, x);
+	complex<double> result2 = SFL_Hypergeometric1F1(mlambda+0.5, 2.0*mlambda+1.0, x);
+	complex<double> result3 = SFL_Hypergeometric1F1(lambda+1.5, 2.0*lambda+1.0, x);
+	complex<double> result4 = SFL_Hypergeometric1F1(mlambda+1.5, 2.0*mlambda+1.0, x);
+}
 if (1) return (0);
+*/
+/*for (int it = 0; it < n_tau_pts; ++it)
+for (int ik = 0; ik < n_k_pts; ++ik)
+{
+	double k = k_pts[ik];
+	//double tau = taui + double(it)*(tauf-taui)/double(200);
+	double tau = tau_pts[it];
+	complex<double> GX = Gtilde_n_color(k, tauf, tau);	//just choose a time
+	cout << setw(25) << setprecision(20) << "SANITY CHECK: " << k << "   " << tau << "   " << GX.real() << "   " << GX.imag() << endl;
+}
+if (1) return (0);*/
 //////////////////////////////////////////////////////////
 
 	for (int ik = 0; ik < n_k_pts; ++ik)
@@ -231,7 +267,7 @@ if (1) return (0);
 					* ( Ftn1 * conj(Ftn2) * Ctnn );
 			//cout << k << "   " << (Ftn1 * conj(Ftn2)).real() << "   " << Ctnn.real() << "   " << (Ftn1 * conj(Ftn2) * Ctnn).real() << endl;
 		}
-//if (1) return (0);
+		//if (1) return (0);
 
 		complex<double> result_lattice = (ds*tauf*Tf / (4.0*M_PI*M_PI * norm)) * sum_lattice;
 		cout << setprecision(15) << Delta_y << "   " << result_lattice.real() << "   " << result_lattice.imag() << endl;

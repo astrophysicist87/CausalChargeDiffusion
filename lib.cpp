@@ -8,6 +8,10 @@
 
 #include <gsl/gsl_integration.h>
 
+//#include "./special_function_library/cmlib/cmlib.h"
+//#include "./special_function_library/cmlib/complex.h"
+//#include "./special_function_library/cmlib/protom.h"
+
 using namespace std;
 
 #include "lib.h"
@@ -362,7 +366,7 @@ long binarySearch(double * A, int length, double value, bool skip_out_of_range /
 ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////
 
-complex<double> Hypergeometric0F1(complex<double> a_in, complex<double> z_in)
+/*complex<double> Hypergeometric0F1(complex<double> a_in, complex<double> z_in)
 {
 	complex<double> a = a_in, z = z_in;
 
@@ -381,7 +385,7 @@ complex<double> Hypergeometric0F1(complex<double> a_in, complex<double> z_in)
 	//cout << setw(15) << setprecision(12) << "Hypergeometric0F1: " << a_in.real() << "   " << a_in.imag()
 	//		<< "   " << z_in.real() << "   " << z_in.imag() << "   " << sum.real() << "   " << sum.imag() << endl;
 	return (sum);
-}
+}*/
 
 complex<double> Hypergeometric1F1(complex<double> a_in, complex<double> b_in, complex<double> z_in)
 {
@@ -405,6 +409,28 @@ complex<double> Hypergeometric1F1(complex<double> a_in, complex<double> b_in, co
 	//cout << setw(15) << setprecision(12) << "Hypergeometric1F1: " << a_in.real() << "   " << a_in.imag() << "   " << b_in.real() << "   " << b_in.imag()
 	//		<< "   " << z_in.real() << "   " << z_in.imag() << "   " << sum.real() << "   " << sum.imag() << endl;
 	return (sum);
+}
+
+
+complex<double> SFL_Hypergeometric1F1(complex<double> a_in, complex<double> b_in, complex<double> z_in)
+{
+	struct SFL::complex a, b, z, ans;
+	int top = -1;
+	a.x = a_in.real();
+	a.y = a_in.imag();
+	b.x = b_in.real();
+	b.y = b_in.imag();
+	z.x = z_in.real();
+	z.y = z_in.imag();
+
+	SFL::c1f1(&a, &b, &z, top, &ans);
+
+	complex<double> ans_out(ans.x, ans.y);
+
+	//cout << setw(15) << setprecision(12) << "SFL_Hypergeometric1F1: " << a_in.real() << "   " << a_in.imag() << "   " << b_in.real() << "   " << b_in.imag()
+	//		<< "   " << z_in.real() << "   " << z_in.imag() << "   " << ans_out.real() << "   " << ans_out.imag() << endl;
+
+	return (ans_out);
 }
 
 //End of file
