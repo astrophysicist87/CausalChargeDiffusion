@@ -314,6 +314,7 @@ inline complex<double> Gtilde_n_white(double k, double tau, double taup)
 {
 	double arg = DQ * k * k * ((1.0/tau) - (1.0/taup));	//since tau==tauf always in this calculation,
 														//exp(arg) will always be Gaussian in k
+//cout << "CHECK: " << k << "   " << k * exp(arg) << endl;
 	return ( i * k * exp(arg) ); //dimensionless
 }
 
@@ -335,7 +336,7 @@ inline complex<double> asymptotic_Gtilde_n_color(double k, double tau, double ta
 	return ( i*k*prefactor*mainfactor );
 }
 
-inline complex<double> Gtilde_n_color(double k, double tau, double taup, bool regulate_with_asymptotics)
+inline complex<double> Gtilde_n_color(double k, double tau, double taup)
 {
 	double xp = taup / tauQ;
 	complex<double> one_fourth = 0.25;
@@ -355,8 +356,7 @@ inline complex<double> Gtilde_n_color(double k, double tau, double taup, bool re
 
 	complex<double> result = numerator / denominator;
 
-	if ( regulate_with_asymptotics
-			&& abs(denominator) < 1.e-15 && abs(numerator) < 1.e-15
+	if ( abs(denominator) < 1.e-15 && abs(numerator) < 1.e-15
 			&& 2.0*abs(n1-n2)/( abs(n1)+abs(n2) ) < 1.e-10 )
 	{
 		result = exp(DQ * k * k * ((1.0/tau) - (1.0/taup)) );
@@ -368,33 +368,7 @@ inline complex<double> Gtilde_n_color(double k, double tau, double taup, bool re
 inline complex<double> tau_integration(
 					complex<double> (*Gtilde_X)(double, double, double),
 					complex<double> (*Gtilde_Y)(double, double, double),
-					double tau_f1, double tau_f2, double k)
-{
-	complex<double> result(0,0);
-	for (int it = 0; it < n_tau_pts; ++it)
-	{
-		double tau_loc = tau_pts[it];
-		double T_loc = T_pts[it];
-		double s_loc = s_vs_T(T_loc);
-		double chi_Q = chi_mumu(T_loc);
-		complex<double> tmp_result = tau_wts[it] * ( 2.0 * DQ * chi_Q * T_loc / tau_loc )
-										* (*Gtilde_X)(k, tau_f1, tau_loc) * (*Gtilde_Y)(-k, tau_f2, tau_loc);
-		result += tmp_result;
-	}
-
-	double self_correlation = 0.0;
-	if (subtract_self_correlations)
-		self_correlation = chi_mumu(Tf) * Tf * tauf;
-
-	double sign_factor = 1.0-2.0*double(subtract_self_correlations);
-
-	return ( sign_factor * (result - self_correlation) );
-}
-
-inline complex<double> tau_integration(
-					complex<double> (*Gtilde_X)(double, double, double, bool),
-					complex<double> (*Gtilde_Y)(double, double, double, bool),
-					double tau_f1, double tau_f2, double k)
+					double k, double tau_f1, double tau_f2)
 {
 	complex<double> result(0,0);
 	for (int it = 0; it < n_tau_pts; ++it)
@@ -408,7 +382,7 @@ inline complex<double> tau_integration(
 			self_correlation = GG_self_correlations(k, tau_loc, tau_loc);
 
 		complex<double> tmp_result = tau_wts[it] * ( 2.0 * DQ * chi_Q * T_loc / tau_loc ) *
-										( (*Gtilde_X)(k, tau_f1, tau_loc, true) * (*Gtilde_Y)(-k, tau_f2, tau_loc, true) - self_correlation );
+										( (*Gtilde_X)(k, tau_f1, tau_loc) * (*Gtilde_Y)(-k, tau_f2, tau_loc) - self_correlation );
 		result += tmp_result;
 	}
 
@@ -448,9 +422,9 @@ inline void set_running_transport_integral(double * run_int_array)
 }
 
 inline complex<double> colored_tau_integration(
-					complex<double> (*Gtilde_X)(double, double, double, bool),
-					complex<double> (*Gtilde_Y)(double, double, double, bool),
-					double tau_f1, double tau_f2, double k)
+					complex<double> (*Gtilde_X)(double, double, double),
+					complex<double> (*Gtilde_Y)(double, double, double),
+					double k, double tau_f1, double tau_f2)
 {
 	complex<double> locsum(0,0);
 
@@ -468,7 +442,7 @@ inline complex<double> colored_tau_integration(
 		double tX_loc = tau_pts[itp];
 		double TX_loc = T_pts[itp];
 		double sX_loc = s_vs_T(TX_loc);
-		complex<double> factor_X = sX_loc * (*Gtilde_X)(k, tauf, tX_loc, true);		//extra factor of entropy!!!
+		complex<double> factor_X = sX_loc * (*Gtilde_X)(k, tauf, tX_loc);		//extra factor of entropy!!!
 
 		double tau_lower = max(taui, tX_loc + delta_tau_lower);			//if lower limit goes before beginning of lifetime, just start at tau0
 		double tau_upper = min(tauf, tX_loc + delta_tau_upper);			//if upper limit goes past end of lifetime, just end at tauf
@@ -487,8 +461,8 @@ inline complex<double> colored_tau_integration(
 			if (subtract_self_correlations)
 				GG_self_corr = sX_loc * sY_loc * GG_self_correlations(k, tX_loc, tY_loc);
 
-			complex<double> factor_Y = sY_loc * (*Gtilde_Y)(-k, tauf, tY_loc, true);	//extra factor of entropy!!!
-//cout << "CHECK: " << tX_loc << "   " << tY_loc << "   " << TY_loc << "   " << sY_loc << "   " << (*Gtilde_Y)(-k, tauf, tY_loc, true) << "   " << factor_Y << endl;
+			complex<double> factor_Y = sY_loc * (*Gtilde_Y)(-k, tauf, tY_loc);	//extra factor of entropy!!!
+cout << "CHECK: " << tX_loc << "   " << tY_loc << "   " << TY_loc << "   " << sY_loc << "   " << (*Gtilde_Y)(-k, tauf, tY_loc) << "   " << factor_Y << endl;
 
 			double min_tp_tpp = min(tX_loc, tY_loc);
 			double eta_at_min_tp_tpp = interpolate1D(tau_pts, running_integral_array, min_tp_tpp, n_tau_pts, 0, false, 2);
