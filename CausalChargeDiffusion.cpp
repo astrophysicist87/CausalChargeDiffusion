@@ -144,6 +144,7 @@ int main(int argc, char *argv[])
 			<< "# taui = " << taui << " fm/c, tauf = " << tauf << " fm/c" << endl
 			<< "# si = " << si << ", sf = " << sf << endl
 			<< "# Ti = " << Ti*hbarC << " MeV, Tf = " << Tf*hbarC << " MeV" << endl
+			<< "# v_Q^2 = " << vQ2 << ", D_Q = " << DQ << " fm/c, tau_Q = " << tauQ << " fm/c" << endl
 			<< "# chi_{T,T} = " << chi_T_T << ", chi_{T,mu} = chi_{mu,T} = " << chi_T_mu << ", chi_{mu,mu} = " << chi_mu_mu << endl
 			<< "#########################################################" << endl;
 
@@ -260,7 +261,7 @@ if (1) return (0);*/
 	{
 		double k = k_pts[ik];
 		current_ik = ik;
-		Ctnn_vec.push_back(Ctilde_n_n(k, tauf, tauf));
+		Ctnn_vec.push_back(Ctilde_n_n(k, tauf));
 	}
 
 	//start computing actual charge balance functions here
