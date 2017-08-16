@@ -185,6 +185,12 @@ double interpLinearNondirect(double * x, double * y, double x0, long size, bool 
 		else
 		{
 			idx = (idx<0) ? 0 : size-2;	//uses extrapolation
+			//cout //<< "interpLinearNondirect: x0 out of bounds." << endl
+			//		<< "interpLinearNondirect(" << (int)default_return_value << "): x ranges from " << x[0] << " to " << x[size-1] << ", "
+			//		<< "x0=" << x0 << ", " << "dx=" << dx << ", " << "idx=" << idx << endl
+			//		<< "interpLinearNondirect: data = " << x[idx] << "   " << x[idx+1] << "   " << y[idx] << "   " << y[idx+1] << endl
+			//		<< "interpLinearNondirect: result = " << y[idx] + (y[idx+1]-y[idx])/(x[idx+1]-x[idx])*(x0-x[idx]) << endl;
+			//idx = (idx<0) ? 0 : size-2;	//uses extrapolation
 		}
 		//else return default_return_value;
 	}
@@ -337,13 +343,17 @@ long binarySearch(double * A, int length, double value, bool skip_out_of_range /
 
    if(value > A[idx_f])
    {
-      if (verbose) cerr << "binarySearch: desired value is too large, exceeding the end of the table: value = " << value << " and A[idx_f] = " << A[idx_f] << endl;
-      if (skip_out_of_range) return -1;
+      if (verbose)
+		cerr << "binarySearch: desired value is too large, exceeding the end of the table: value = "
+				<< value << " and A[idx_f] = " << A[idx_f] << endl;
+      if (skip_out_of_range) return length;
       exit(1);
    }
    if(value < A[idx_i])
    {
-      if (verbose) cerr << "binarySearch: desired value is too small, exceeding the beginning of table: value = " << value << " and A[idx_i] = " << A[idx_i] << endl;
+      if (verbose)
+		cerr << "binarySearch: desired value is too small, exceeding the beginning of table: value = "
+				<< value << " and A[idx_i] = " << A[idx_i] << endl;
       if (skip_out_of_range) return -1;
       exit(1);
    }

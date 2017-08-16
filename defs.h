@@ -37,8 +37,8 @@ string truestring = "true";
 string falsestring = "false";
 
 bool white_noise = false;
-bool white_Green = false;
-bool subtract_self_correlations = true;
+bool white_Green = white_noise;	//for now
+bool subtract_self_correlations = false;
 
 inline string return_boolean_string(bool test){return (test ? truestring : falsestring);}
 
@@ -274,8 +274,9 @@ inline double B2(double x, double xp)
 
 inline double mediumN(double tau_loc)
 {
-	//double T_loc = interpolate1D(tau_pts, T_pts, tau_loc, n_tau_pts, 0, false);
-	double T_loc = guess_T(tau_loc);
+	double T_loc = interpolate1D(tau_pts, T_pts, tau_loc, n_tau_pts, 0, false);
+	double comp_T_loc = guess_T(tau_loc);
+	//cout << "COMPARE: " << __LINE__ << "   " << T_loc << "   " << comp_T_loc << endl;
 	double s_loc = s_vs_T(T_loc);
 	double chi_Q = chi_mumu(T_loc);
 	double numerator = 2.0 * DQ * chi_Q * T_loc;
@@ -339,6 +340,8 @@ inline complex<double> Gtilde_n_color(double k, double tau, double taup)
 		result = exp(DQ * k * k * ((1.0/tau) - (1.0/taup)) );
 	}
 
+	//cout << "CHECK LATEST: " << k << "   " << tau << "   " << taup << "   " << numerator << "   " << denominator << endl;
+
 	return ( i * k * result ); //dimensionless
 }
 
@@ -386,8 +389,9 @@ inline complex<double> tau_integration_WhiteGreen(
 	{
 		//double tau_loc = tau_pts[it];
 		double tau_loc = cen_loc + hw_loc * local_x_pts[it];
-		//double T_loc = T_pts[it];
-		double T_loc = guess_T(tau_loc);
+		double T_loc = T_pts[it];
+		double comp_T_loc = guess_T(tau_loc);
+	//cout << "COMPARE: " << __LINE__ << "   " << T_loc << "   " << comp_T_loc << endl;
 		double s_loc = s_vs_T(T_loc);
 		double chi_Q = chi_mumu(T_loc);
 		complex<double> tmp_result = hw_loc * local_x_wts[it] * ( 2.0 * DQ * chi_Q * T_loc / tau_loc )
@@ -395,7 +399,9 @@ inline complex<double> tau_integration_WhiteGreen(
 		result += tmp_result;
 	}
 	
-	double local_Tf = guess_T(tau_f_local);
+	double comp_local_Tf = guess_T(tau_f_local);
+	double local_Tf = Tf;
+	//cout << "COMPARE: " << __LINE__ << "   " << local_Tf << "   " << comp_local_Tf << endl;
 
 	double self_correlation = 0.0;
 	if (subtract_self_correlations)
@@ -426,8 +432,9 @@ inline complex<double> tau_integration(
 	{
 		//double tau_loc = tau_pts[it];
 		double tau_loc = cen_loc + hw_loc * local_x_pts[it];
-		//double T_loc = T_pts[it];
-		double T_loc = guess_T(tau_loc);
+		double T_loc = T_pts[it];
+		double comp_T_loc = guess_T(tau_loc);
+		//cout << "COMPARE: " << __LINE__ << "   " << T_loc << "   " << comp_T_loc << endl;
 		double s_loc = s_vs_T(T_loc);
 		double chi_Q = chi_mumu(T_loc);
 		double self_correlation = 0.0;
@@ -487,7 +494,7 @@ inline complex<double> colored_tau_integration(
 
 	//double sign_factor = 1.0-2.0*double(subtract_self_correlations);
 	double sign_factor = 1.0;
-	
+//debugger(__LINE__, __FILE__);
 	const int n_x_pts = 201;	//try this
 	double * x_pts = new double [n_x_pts];
 	double * x_wts = new double [n_x_pts];
@@ -504,12 +511,14 @@ inline complex<double> colored_tau_integration(
 	for (int itp = 0; itp < n_tau_pts; ++itp)
 	{
 		//double tX_loc = tau_pts[itp];
-		//double TX_loc = T_pts[itp];
+		double TX_loc = T_pts[itp];
 		double tX_loc = new_cen_loc + new_hw_loc * local_x_pts[itp];
-		double TX_loc = guess_T(tX_loc);
+		double comp_TX_loc = guess_T(tX_loc);
+	//cout << "COMPARE: " << __LINE__ << "   " << TX_loc << "   " << comp_TX_loc << endl;
 		double sX_loc = s_vs_T(TX_loc);
+//debugger(__LINE__, __FILE__);
 		complex<double> factor_X = sX_loc * (*Gtilde_X)(k, tau_f_local, tX_loc);		//extra factor of entropy!!!
-
+//debugger(__LINE__, __FILE__);
 		double tau_lower = max(taui, tX_loc + delta_tau_lower);			//if lower limit goes before beginning of lifetime, just start at tau0
 		double tau_upper = min(tau_f_local, tX_loc + delta_tau_upper);			//if upper limit goes past end of lifetime, just end at tauf
 		double hw_loc = 0.5 * (tau_upper - tau_lower);
@@ -519,19 +528,21 @@ inline complex<double> colored_tau_integration(
 		for (int ix = 0; ix < n_x_pts; ++ix)
 		{
 			double tY_loc = cen_loc + hw_loc * x_pts[ix];
-			double TY_loc = guess_T(tY_loc);
-			//double TY_loc = interpolate1D(tau_pts, T_pts, tY_loc, n_tau_pts, 0, false, 2);
+			double comp_TY_loc = guess_T(tY_loc);
+			double TY_loc = interpolate1D(tau_pts, T_pts, tY_loc, n_tau_pts, 0, false, true/*, __LINE__*/);
+	//cout << "COMPARE: " << __LINE__ << "   " << tY_loc << "   " << TY_loc << "   " << comp_TY_loc << endl;
 			double sY_loc = s_vs_T(TY_loc);
-
+//debugger(__LINE__, __FILE__);
 			//check if we want to subtract self-correlations
 			double GG_self_corr = 0.0;
 			if (subtract_self_correlations)
 				GG_self_corr = sX_loc * sY_loc * GG_self_correlations(k, tau_f_local, tX_loc, tY_loc);
-
+//debugger(__LINE__, __FILE__);
 			complex<double> factor_Y = sY_loc * (*Gtilde_Y)(-k, tau_f_local, tY_loc);	//extra factor of entropy!!!
-
+//cout << "CHECK: " << tX_loc << "   " << tY_loc << "   " << TY_loc << "   " << sY_loc << "   " << (*Gtilde_Y)(-k, tau_f_local, tY_loc) << "   " << factor_Y << endl;
+//debugger(__LINE__, __FILE__);
 			double min_tp_tpp = min(tX_loc, tY_loc);
-			double eta_at_min_tp_tpp = interpolate1D(tau_pts, running_integral_array, min_tp_tpp, n_tau_pts, 0, false, 2);
+			double eta_at_min_tp_tpp = interpolate1D(tau_pts, running_integral_array, min_tp_tpp, n_tau_pts, 0, false, true);
 
 			double sum_XY = exp(-abs(tX_loc - tY_loc) / tauQ) * eta_at_min_tp_tpp / (2.0*tauQ);
 //cout << "CHECK: " << itp << "   " << ix << "   " << sign_factor << "   " << factor_X << "   " << factor_Y << "   " << GG_self_corr << "   " << sum_XY << endl;

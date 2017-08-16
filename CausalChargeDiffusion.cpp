@@ -29,7 +29,7 @@ const int n_Dy = 51;
 //const double tauC = 0.5;	//fm/c
 const double DQ = 0.162035;	//fm (rough estimate!)
 //const double vQ2 = DQ/tauQ;	//N.B. - must have tauQ > DQ for sub-luminal speed!
-const double vQ2 = 1.0/3.0;
+const double vQ2 = 10.0;
 const double tauC = DQ/vQ2;
 const double tauQ = tauC;	//for consistency with manuscript
 
@@ -164,6 +164,10 @@ int main(int argc, char *argv[])
 
 	//computes tau-dependence of T and mu for remainder of calculation
 	populate_T_vs_tau();
+
+	//for (int it = 0; it < n_tau_pts; ++it)
+	//	cout << tau_pts[it] << "   " << T_pts[it] << endl;
+	//if (1) return (0);
 
 	//get the ensemble averaged spectra
 	double norm = integrate_1D(norm_int, xi_pts_minf_inf, xi_wts_minf_inf, n_xi_pts, &particle1);	//by definition of charge balance function (CBF)
