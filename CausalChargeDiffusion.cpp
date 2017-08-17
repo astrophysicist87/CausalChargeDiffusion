@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <iomanip>
 #include <cmath>
 #include <vector>
@@ -70,7 +71,7 @@ int main(int argc, char *argv[])
 
 	/*const int n_x_pts = 50;
 	vector<double> x_pts, x_wts;
-	int tmp2 = gauss_quadrature(n_x_pts, 6, 0.0, 0.0, 0.0, k_critical/(double)n_x_pts, x_pts, x_wts);
+	int tmp2 = gauss_quadrature(n_x_pts, 6, 0.0, 0.0, 0.0, 1.0/(k_infinity*k_critical), x_pts, x_wts);
 	for (int ix = 0; ix < n_x_pts; ++ix)
 		cout << x_pts[ix] << "   " << x_wts[ix] << endl;
 	if (1) return (0);*/
@@ -158,6 +159,7 @@ int main(int argc, char *argv[])
 
     int tmp = gauss_quadrature(n_xi_pts, 1, 0.0, 0.0, -xi_infinity, xi_infinity, xi_pts_minf_inf, xi_wts_minf_inf);
     tmp = gauss_quadrature(n_k_pts, 1, 0.0, 0.0, -k_infinity, k_infinity, k_pts, k_wts);
+	//tmp = gauss_quadrature(n_k_pts, 6, 0.0, 0.0, 0.0, 1.0/(k_infinity*k_critical), k_pts, k_wts);
     tmp = gauss_quadrature(n_tau_pts, 1, 0.0, 0.0, taui, tauf, tau_pts, tau_wts);
 
 	T_pts = new double [n_tau_pts];
@@ -169,26 +171,27 @@ int main(int argc, char *argv[])
 	//	cout << tau_pts[it] << "   " << T_pts[it] << endl;
 	//if (1) return (0);
 
-	//get the ensemble averaged spectra
-	double norm = integrate_1D(norm_int, xi_pts_minf_inf, xi_wts_minf_inf, n_xi_pts, &particle1);	//by definition of charge balance function (CBF)
-
-	//vectorize calculations to make them run a little faster
-	vector<complex<double> > Ftn_particle1_vec, Ftn_particle2_vec;
-	vector<complex<double> > Ctnn_vec;
-
 //////////////////////////////////////////////////////////
-//	for (int ixi = 0; ixi < n_xi_pts; ++ixi)
-//		cout << xi_pts_minf_inf[ixi] << "   " << Fn(xi_pts_minf_inf[ixi], &particle1) << "   " << Fn(xi_pts_minf_inf[ixi], &particle1) << endl;
-//if (1) return (0);
-
 //check that self-correlations actually subtract off the right part...
 //do it for single G_tilde first...
-/*for (int ik = 0; ik < n_k_pts; ++ik)
+/*double vQ2s[5] = {1.0/3.0, 0.5, 1.0, 2.5, 10.0};
+for (int j = 0; j < 5; ++j)
 {
-	double k = k_pts[ik];
-	complex<double> GX = Gtilde_n_color(k, tauf, 0.5*tauf);	//just choose a time
-	complex<double> asympGX = asymptotic_Gtilde_n_color(k, tauf, 0.5*tauf);	//just choose a time
-	cout << "SANITY CHECK: " << k << "   " << GX.real() << "   " << GX.imag() << "   " << asympGX.real() << "   " << asympGX.imag() << endl;
+	ostringstream filename_stream;
+	filename_stream << "G_asymG_comp_" << j << ".dat";
+	ofstream out;
+	out.open(filename_stream.str().c_str());
+	for (int ik = 0; ik < n_k_pts; ++ik)
+	{
+		double k = k_pts[ik];
+		complex<double> GX = Gtilde_n_color(k, tauf, 0.5*tauf, vQ2s[j]);	//just choose a time
+		complex<double> asympGX = asymptotic_Gtilde_n_color(k, tauf, 0.5*tauf, vQ2s[j]);	//just choose a time
+		complex<double> whiteGX = Gtilde_n_white(k, tauf, 0.5*tauf);	//just choose a time
+		out << k << "   " << GX.real() << "   " << GX.imag() << "   "
+			<< asympGX.real() << "   " << asympGX.imag() << "   "
+			<< whiteGX.real() << "   " << whiteGX.imag() << endl;
+	}
+	out.close();
 }
 if (1) return (0);*/
 
@@ -196,17 +199,16 @@ if (1) return (0);*/
 /*for (int ik = 0; ik < n_k_pts; ++ik)
 {
 	double k = k_pts[ik];
-	complex<double> GX = Gtilde_n_color(k, tauf, 0.15*tauf);	//just choose a time
-	complex<double> GY = Gtilde_n_color(-k, tauf, 0.65*tauf);	//just choose a time
+	complex<double> GX = Gtilde_n_color(k, tauf, 0.99*tauf);	//just choose a time
+	complex<double> GY = Gtilde_n_color(-k, tauf, 0.99*tauf);	//just choose a time
 	complex<double> GXY = GX*GY;
-	double GXY_self_corr = GG_self_correlations(k, 0.15*tauf, 0.65*tauf);
+	double GXY_self_corr = GG_self_correlations(k, tauf, 0.99*tauf, 0.99*tauf);
 	complex<double> GXY_no_corr = GX*GY - GXY_self_corr;
-	//double GXY_self_corr = 2.0*GG_self_correlations(k, tauf, 0.5*tauf)/k;
-	//complex<double> GXY_no_corr = GX*GY - GXY_self_corr*GXY_self_corr;
 	cout << "SANITY CHECK: " << k << "   " << GXY.real() << "   " << GXY.imag() << "   " << GXY_self_corr
 			<< "   " << GXY_no_corr.real() << "   " << GXY_no_corr.imag() << endl;
 }
 if (1) return (0);*/
+
 /*
 for (int ik = 0; ik < n_k_pts; ++ik)
 for (int it = 0; it < n_tau_pts; ++it)
@@ -223,6 +225,7 @@ for (int it = 0; it < n_tau_pts; ++it)
 }
 if (1) return (0);
 */
+
 /*for (int it = 0; it < n_tau_pts; ++it)
 for (int ik = 0; ik < n_k_pts; ++ik)
 {
@@ -235,6 +238,7 @@ for (int ik = 0; ik < n_k_pts; ++ik)
 			<< GX_unreg.real() << "   " << GX_unreg.imag() << "   " << GX.real() << "   " << GX.imag() << endl;
 }
 if (1) return (0);*/
+
 /*for (int it1 = 0; it1 < n_tau_pts; ++it1)
 for (int it2 = 0; it2 < n_tau_pts; ++it2)
 {
@@ -247,7 +251,26 @@ for (int it2 = 0; it2 < n_tau_pts; ++it2)
 			<< GX_unreg.real() << "   " << GX_unreg.imag() << "   " << GX.real() << "   " << GX.imag() << endl;
 }
 if (1) return (0);*/
+
+/*for (int ik = 0; ik < n_k_pts; ++ik)
+{
+	double sum = 0.0;
+	for (int it = 0; it < n_tau_pts; ++it)
+	{
+		double tau_loc = tau_pts[it];
+		sum += tau_wts[it] * GG_self_correlations(k_pts[ik], tauf, tau_loc, tau_loc);
+	}
+	cout << k_pts[ik] << "   " << sum << endl;
+}
+if (1) return (0);*/
 //////////////////////////////////////////////////////////
+
+	//get the ensemble averaged spectra
+	double norm = integrate_1D(norm_int, xi_pts_minf_inf, xi_wts_minf_inf, n_xi_pts, &particle1);	//by definition of charge balance function (CBF)
+
+	//vectorize calculations to make them run a little faster
+	vector<complex<double> > Ftn_particle1_vec, Ftn_particle2_vec;
+	vector<complex<double> > Ctnn_vec;
 
 	for (int ik = 0; ik < n_k_pts; ++ik)
 	{
@@ -273,7 +296,7 @@ if (1) return (0);*/
 	{
 		double Delta_y = (double)iDy * Delta_y_step;
 
-		complex<double> sum_lattice(0,0);
+		complex<double> sum(0,0);
 		for (int ik = 0; ik < n_k_pts; ++ik)
 		{
 			double k = k_pts[ik];
@@ -282,14 +305,14 @@ if (1) return (0);*/
 			complex<double> Ftn2 = Ftn_particle2_vec[ik];
 			complex<double> Ctnn = Ctnn_vec[ik];
 
-			sum_lattice += k_wts[ik] * exp(i * k * Delta_y)
+			sum += k_wts[ik] * exp(i * k * Delta_y)
 					* ( Ftn1 * conj(Ftn2) * Ctnn );
-			//cout << k << "   " << (Ftn1 * conj(Ftn2)).real() << "   " << Ctnn.real() << "   " << (Ftn1 * conj(Ftn2) * Ctnn).real() << endl;
+			cout << k << "   " << (Ftn1 * conj(Ftn2)).real() << "   " << Ctnn.real() << "   " << (Ftn1 * conj(Ftn2) * Ctnn).real() << endl;
 		}
-		//if (1) return (0);
+		if (1) return (0);
 
-		complex<double> result_lattice = (ds*tauf*Tf / (4.0*M_PI*M_PI * norm)) * sum_lattice;
-		cout << setprecision(15) << Delta_y << "   " << result_lattice.real() << "   " << result_lattice.imag() << endl;
+		complex<double> result = (ds*tauf*Tf / (4.0*M_PI*M_PI * norm)) * sum;
+		cout << setprecision(15) << Delta_y << "   " << result.real() << "   " << result.imag() << endl;
 	}
 
 	return 0;
