@@ -30,7 +30,7 @@ const int n_Dy = 51;
 //const double tauC = 0.5;	//fm/c
 const double DQ = 0.162035;	//fm (rough estimate!)
 //const double vQ2 = DQ/tauQ;	//N.B. - must have tauQ > DQ for sub-luminal speed!
-const double vQ2 = 10.0;
+const double vQ2 = 15.0;
 const double tauC = DQ/vQ2;
 const double tauQ = tauC;	//for consistency with manuscript
 

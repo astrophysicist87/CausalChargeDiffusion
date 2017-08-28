@@ -36,9 +36,9 @@ inline int sgn(T val) {
 string truestring = "true";
 string falsestring = "false";
 
-bool white_noise = true;
-bool white_Green = true;	//for now
-bool subtract_self_correlations = false;
+bool white_noise = false;
+bool white_Green = false;	//for now
+bool subtract_self_correlations = true;
 
 inline string return_boolean_string(bool test){return (test ? truestring : falsestring);}
 
@@ -670,6 +670,91 @@ inline complex<double> colored_tau_integration(
 	return (locsum);
 }
 
+inline complex<double> colored_tau_integration_v2(
+					complex<double> (*Gtilde_X)(double, double, double),
+					complex<double> (*Gtilde_Y)(double, double, double),
+					double k, double tau_f_local)
+{
+	complex<double> locsum(0,0);
+
+	double * local_x_pts = new double [n_tau_pts];
+	double * local_x_wts = new double [n_tau_pts];
+	gauss_quadrature(n_tau_pts, 1, 0.0, 0.0, -1.0, 1.0, local_x_pts, local_x_wts);
+	double new_hw_loc = 0.5 * (tau_f_local - taui);
+	double new_cen_loc = 0.5 * (tau_f_local + taui);
+
+	double sign_factor = 1.0-2.0*double(subtract_self_correlations);
+	//double sign_factor = 1.0;
+	complex<double> delta_n_delta_n_self_corr = 0.0;
+	if (subtract_self_correlations)
+	{
+		for (int itp = 0; itp < n_tau_pts; ++itp)
+		{
+			double tau_p_local = new_cen_loc + new_hw_loc * local_x_pts[itp];
+			delta_n_delta_n_self_corr += new_hw_loc * local_x_wts[itp] / tau_p_local
+											* ( exp(-(tau_f_local - tau_p_local)/tauQ)
+												- exp(-(tau_f_local-taui+tau_p_local)/tauQ) )
+											* (*Gtilde_X)(-k, tau_f_local, tau_p_local);
+		}
+	}
+	delta_n_delta_n_self_corr *= -chi_mu_mu*Tf/(tauQ*i*k);
+
+	const int n_x_pts = 201;	//try this
+	double * x_pts = new double [n_x_pts];
+	double * x_wts = new double [n_x_pts];
+	gauss_quadrature(n_x_pts, 1, 0.0, 0.0, -1.0, 1.0, x_pts, x_wts);
+
+	//this bounds the interval where the integrand is large-ish
+	double delta_tau_lower = -10.0 * tauQ, delta_tau_upper = 10.0 * tauQ;
+
+	for (int itp = 0; itp < n_tau_pts; ++itp)
+	{
+		double tX_loc = new_cen_loc + new_hw_loc * local_x_pts[itp];
+		double TX_loc = guess_T(tX_loc);
+
+		double sX_loc = s_vs_T(TX_loc);
+
+		complex<double> factor_X = sX_loc * (*Gtilde_X)(k, tau_f_local, tX_loc);		//extra factor of entropy!!!
+
+		//if lower limit goes before beginning of lifetime, just start at tau0
+		double tau_lower = max(taui, tX_loc + delta_tau_lower);
+		//if upper limit goes past end of lifetime, just end at tauf
+		double tau_upper = min(tau_f_local, tX_loc + delta_tau_upper);
+
+		double hw_loc = 0.5 * (tau_upper - tau_lower);
+		double cen_loc = 0.5 * (tau_upper + tau_lower);
+
+		complex<double> sum_X = 0.0;
+		for (int ix = 0; ix < n_x_pts; ++ix)
+		{
+			double tY_loc = cen_loc + hw_loc * x_pts[ix];
+			double TY_loc = guess_T(tY_loc);
+
+			double sY_loc = s_vs_T(TY_loc);
+
+			complex<double> factor_Y = sY_loc * (*Gtilde_Y)(-k, tau_f_local, tY_loc);	//extra factor of entropy!!!
+
+			double min_tp_tpp = min(tX_loc, tY_loc);
+			double eta_at_min_tp_tpp = interpolate1D(tau_pts, running_integral_array, min_tp_tpp, n_tau_pts, 0, false, true);
+
+			double sum_XY = exp(-abs(tX_loc - tY_loc) / tauQ) * eta_at_min_tp_tpp / (2.0*tauQ);
+			sum_X += hw_loc * x_wts[ix] * sign_factor * factor_X * factor_Y * sum_XY;
+			complex<double> factorXY = factor_X * factor_Y;
+		}
+		locsum += new_hw_loc * local_x_wts[itp] * sum_X;
+	}
+
+	delete [] x_pts;
+	delete [] x_wts;
+	delete [] local_x_pts;
+	delete [] local_x_wts;
+
+	cout << "Sanity check: " << delta_n_delta_n_self_corr << "   " << chi_mu_mu *Tf / tau_f_local << endl;
+	if (1) exit(0);
+
+	return (sign_factor * (locsum - delta_n_delta_n_self_corr) );
+}
+
 inline complex<double> Ctilde_n_n(double k, double tau_f_local)	//allows to calculate at other points
 {
 	complex<double> sum(0,0);
@@ -683,7 +768,7 @@ inline complex<double> Ctilde_n_n(double k, double tau_f_local)	//allows to calc
 		if ( white_noise )
 			sum = tau_integration_coloredGreen(Gtilde_n_color, Gtilde_n_color, k, tau_f_local);
 		else
-			sum = colored_tau_integration(Gtilde_n_color, Gtilde_n_color, k, tau_f_local);
+			sum = colored_tau_integration_v2(Gtilde_n_color, Gtilde_n_color, k, tau_f_local);
 	}
 
 	return ( sum / (tau_f_local*tau_f_local) );	//fm^2; note that we must include extra factor of tauf^-2 for consistency with manuscript
