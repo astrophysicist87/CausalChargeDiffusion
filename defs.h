@@ -37,7 +37,7 @@ string truestring = "true";
 string falsestring = "false";
 
 bool white_noise = false;
-bool white_Green = false;	//for now
+bool white_Green = false;
 bool subtract_self_correlations = true;
 
 inline string return_boolean_string(bool test){return (test ? truestring : falsestring);}
@@ -516,6 +516,8 @@ inline complex<double> tau_integration_WhiteGreen(
 	delete [] local_x_pts;
 	delete [] local_x_wts;
 //cerr << "self_correlation = " << k << "   " << self_correlation << endl;
+cout << "Sanity check: " << k << "   " << self_correlation << "   " << result.real() << endl;
+if (1) return (0);
 
 	return ( sign_factor * (result - self_correlation) );
 }
@@ -693,11 +695,11 @@ inline complex<double> colored_tau_integration_v2(
 			double tau_p_local = new_cen_loc + new_hw_loc * local_x_pts[itp];
 			delta_n_delta_n_self_corr += new_hw_loc * local_x_wts[itp] / tau_p_local
 											* ( exp(-(tau_f_local - tau_p_local)/tauQ)
-												- exp(-(tau_f_local-taui+tau_p_local)/tauQ) )
+												- exp(-(tau_f_local - taui + tau_p_local)/tauQ) )
 											* (*Gtilde_X)(-k, tau_f_local, tau_p_local);
 		}
 	}
-	delta_n_delta_n_self_corr *= -chi_mu_mu*Tf/(tauQ*i*k);
+	delta_n_delta_n_self_corr *= -tau_f_local*tau_f_local*chi_mumu(Tf)*Tf/(tauQ*i*k);
 
 	const int n_x_pts = 201;	//try this
 	double * x_pts = new double [n_x_pts];
@@ -738,8 +740,7 @@ inline complex<double> colored_tau_integration_v2(
 			double eta_at_min_tp_tpp = interpolate1D(tau_pts, running_integral_array, min_tp_tpp, n_tau_pts, 0, false, true);
 
 			double sum_XY = exp(-abs(tX_loc - tY_loc) / tauQ) * eta_at_min_tp_tpp / (2.0*tauQ);
-			sum_X += hw_loc * x_wts[ix] * sign_factor * factor_X * factor_Y * sum_XY;
-			complex<double> factorXY = factor_X * factor_Y;
+			sum_X += hw_loc * x_wts[ix] * factor_X * factor_Y * sum_XY;
 		}
 		locsum += new_hw_loc * local_x_wts[itp] * sum_X;
 	}
@@ -749,7 +750,7 @@ inline complex<double> colored_tau_integration_v2(
 	delete [] local_x_pts;
 	delete [] local_x_wts;
 
-	cout << "Sanity check: " << delta_n_delta_n_self_corr << "   " << chi_mu_mu *Tf / tau_f_local << endl;
+	cout << "Sanity check: " << k << "   " << delta_n_delta_n_self_corr.real() << "   " << locsum.real() << endl;
 	if (1) exit(0);
 
 	return (sign_factor * (locsum - delta_n_delta_n_self_corr) );
@@ -769,6 +770,7 @@ inline complex<double> Ctilde_n_n(double k, double tau_f_local)	//allows to calc
 			sum = tau_integration_coloredGreen(Gtilde_n_color, Gtilde_n_color, k, tau_f_local);
 		else
 			sum = colored_tau_integration_v2(Gtilde_n_color, Gtilde_n_color, k, tau_f_local);
+			//sum = colored_tau_integration(Gtilde_n_color, Gtilde_n_color, k, tau_f_local);
 	}
 
 	return ( sum / (tau_f_local*tau_f_local) );	//fm^2; note that we must include extra factor of tauf^-2 for consistency with manuscript

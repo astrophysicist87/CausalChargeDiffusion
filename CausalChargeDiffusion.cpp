@@ -30,7 +30,7 @@ const int n_Dy = 51;
 //const double tauC = 0.5;	//fm/c
 const double DQ = 0.162035;	//fm (rough estimate!)
 //const double vQ2 = DQ/tauQ;	//N.B. - must have tauQ > DQ for sub-luminal speed!
-const double vQ2 = 15.0;
+const double vQ2 = 10.0;
 const double tauC = DQ/vQ2;
 const double tauQ = tauC;	//for consistency with manuscript
 
@@ -68,13 +68,6 @@ int main(int argc, char *argv[])
 	fraction_of_evolution = 1.0;
 
 	set_phase_diagram_and_EOS_parameters();
-
-	/*const int n_x_pts = 50;
-	vector<double> x_pts, x_wts;
-	int tmp2 = gauss_quadrature(n_x_pts, 6, 0.0, 0.0, 0.0, 1.0/(k_infinity*k_critical), x_pts, x_wts);
-	for (int ix = 0; ix < n_x_pts; ++ix)
-		cout << x_pts[ix] << "   " << x_wts[ix] << endl;
-	if (1) return (0);*/
 
 	//other constants
 	double Delta_y_step = 0.1;
@@ -307,9 +300,9 @@ if (1) return (0);*/
 
 			sum += k_wts[ik] * exp(i * k * Delta_y)
 					* ( Ftn1 * conj(Ftn2) * Ctnn );
-			cout << k << "   " << (Ftn1 * conj(Ftn2)).real() << "   " << Ctnn.real() << "   " << (Ftn1 * conj(Ftn2) * Ctnn).real() << endl;
+			//cout << k << "   " << (Ftn1 * conj(Ftn2)).real() << "   " << Ctnn.real() << "   " << (Ftn1 * conj(Ftn2) * Ctnn).real() << endl;
 		}
-		if (1) return (0);
+		//if (1) return (0);
 
 		complex<double> result = (ds*tauf*Tf / (4.0*M_PI*M_PI * norm)) * sum;
 		cout << setprecision(15) << Delta_y << "   " << result.real() << "   " << result.imag() << endl;
