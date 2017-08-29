@@ -160,110 +160,32 @@ int main(int argc, char *argv[])
 	//computes tau-dependence of T and mu for remainder of calculation
 	populate_T_vs_tau();
 
-	//for (int it = 0; it < n_tau_pts; ++it)
-	//	cout << tau_pts[it] << "   " << T_pts[it] << endl;
-	//if (1) return (0);
-
-//////////////////////////////////////////////////////////
-//check that self-correlations actually subtract off the right part...
-//do it for single G_tilde first...
-/*double vQ2s[5] = {1.0/3.0, 0.5, 1.0, 2.5, 10.0};
-for (int j = 0; j < 5; ++j)
-{
-	ostringstream filename_stream;
-	filename_stream << "G_asymG_comp_" << j << ".dat";
-	ofstream out;
-	out.open(filename_stream.str().c_str());
+	//////////////////////////////////////////////////////////
+	//Check hypergeometric function implementations
+	/*
 	for (int ik = 0; ik < n_k_pts; ++ik)
-	{
-		double k = k_pts[ik];
-		complex<double> GX = Gtilde_n_color(k, tauf, 0.5*tauf, vQ2s[j]);	//just choose a time
-		complex<double> asympGX = asymptotic_Gtilde_n_color(k, tauf, 0.5*tauf, vQ2s[j]);	//just choose a time
-		complex<double> whiteGX = Gtilde_n_white(k, tauf, 0.5*tauf);	//just choose a time
-		out << k << "   " << GX.real() << "   " << GX.imag() << "   "
-			<< asympGX.real() << "   " << asympGX.imag() << "   "
-			<< whiteGX.real() << "   " << whiteGX.imag() << endl;
-	}
-	out.close();
-}
-if (1) return (0);*/
-
-//then for product...
-/*for (int ik = 0; ik < n_k_pts; ++ik)
-{
-	double k = k_pts[ik];
-	complex<double> GX = Gtilde_n_color(k, tauf, 0.99*tauf);	//just choose a time
-	complex<double> GY = Gtilde_n_color(-k, tauf, 0.99*tauf);	//just choose a time
-	complex<double> GXY = GX*GY;
-	double GXY_self_corr = GG_self_correlations(k, tauf, 0.99*tauf, 0.99*tauf);
-	complex<double> GXY_no_corr = GX*GY - GXY_self_corr;
-	cout << "SANITY CHECK: " << k << "   " << GXY.real() << "   " << GXY.imag() << "   " << GXY_self_corr
-			<< "   " << GXY_no_corr.real() << "   " << GXY_no_corr.imag() << endl;
-}
-if (1) return (0);*/
-
-/*
-for (int ik = 0; ik < n_k_pts; ++ik)
-for (int it = 0; it < n_tau_pts; ++it)
-{
-	complex<double> k = k_pts[ik];
-	complex<double> x = tau_pts[it] / tauQ;
-	complex<double> lambda = sqrt(0.25 - vQ2*k*k);
-	complex<double> mlambda = -sqrt(0.25 - vQ2*k*k);
-
-	complex<double> result1 = SFL_Hypergeometric1F1(lambda+0.5, 2.0*lambda+1.0, x);
-	complex<double> result2 = SFL_Hypergeometric1F1(mlambda+0.5, 2.0*mlambda+1.0, x);
-	complex<double> result3 = SFL_Hypergeometric1F1(lambda+1.5, 2.0*lambda+1.0, x);
-	complex<double> result4 = SFL_Hypergeometric1F1(mlambda+1.5, 2.0*mlambda+1.0, x);
-}
-if (1) return (0);
-*/
-
-/*for (int it = 0; it < n_tau_pts; ++it)
-for (int ik = 0; ik < n_k_pts; ++ik)
-{
-	double k = k_pts[ik];
-	//double tau = taui + double(it)*(tauf-taui)/double(200);
-	double tau = tau_pts[it];
-	complex<double> GX = Gtilde_n_color(k, tauf, tau, true);
-	complex<double> GX_unreg = Gtilde_n_color(k, tauf, tau, false);
-	cout << setw(25) << setprecision(20) << "Gtilde: " << k << "   " << tau << "   "
-			<< GX_unreg.real() << "   " << GX_unreg.imag() << "   " << GX.real() << "   " << GX.imag() << endl;
-}
-if (1) return (0);*/
-
-/*for (int it1 = 0; it1 < n_tau_pts; ++it1)
-for (int it2 = 0; it2 < n_tau_pts; ++it2)
-{
-	double k = k_pts[(n_k_pts+1)/2];
-	double tau1 = tau_pts[it1];
-	double tau2 = tau_pts[it2];
-	complex<double> GX = Gtilde_n_color(k, tauf, tau, true);
-	complex<double> GX_unreg = Gtilde_n_color(k, tauf, tau, false);
-	cout << setw(25) << setprecision(20) << "Gtilde: " << k << "   " << tau << "   "
-			<< GX_unreg.real() << "   " << GX_unreg.imag() << "   " << GX.real() << "   " << GX.imag() << endl;
-}
-if (1) return (0);*/
-
-/*for (int ik = 0; ik < n_k_pts; ++ik)
-{
-	double sum = 0.0;
 	for (int it = 0; it < n_tau_pts; ++it)
 	{
-		double tau_loc = tau_pts[it];
-		sum += tau_wts[it] * GG_self_correlations(k_pts[ik], tauf, tau_loc, tau_loc);
+		complex<double> k = k_pts[ik];
+		complex<double> x = tau_pts[it] / tauQ;
+		complex<double> lambda = sqrt(0.25 - vQ2*k*k);
+		complex<double> mlambda = -sqrt(0.25 - vQ2*k*k);
+
+		complex<double> result1 = SFL_Hypergeometric1F1(lambda+0.5, 2.0*lambda+1.0, x);
+		complex<double> result2 = SFL_Hypergeometric1F1(mlambda+0.5, 2.0*mlambda+1.0, x);
+		complex<double> result3 = SFL_Hypergeometric1F1(lambda+1.5, 2.0*lambda+1.0, x);
+		complex<double> result4 = SFL_Hypergeometric1F1(mlambda+1.5, 2.0*mlambda+1.0, x);
 	}
-	cout << k_pts[ik] << "   " << sum << endl;
-}
-if (1) return (0);*/
-//////////////////////////////////////////////////////////
+	if (1) return (0);
+	*/
+	//////////////////////////////////////////////////////////
 
 	//get the ensemble averaged spectra
 	double norm = integrate_1D(norm_int, xi_pts_minf_inf, xi_wts_minf_inf, n_xi_pts, &particle1);	//by definition of charge balance function (CBF)
 
 	//vectorize calculations to make them run a little faster
 	vector<complex<double> > Ftn_particle1_vec, Ftn_particle2_vec;
-	vector<complex<double> > Ctnn_vec;
+	vector<complex<double> > Ctnn_vec, Ctnn_no_SC_vec;
 
 	for (int ik = 0; ik < n_k_pts; ++ik)
 	{
@@ -281,7 +203,10 @@ if (1) return (0);*/
 	{
 		double k = k_pts[ik];
 		current_ik = ik;
-		Ctnn_vec.push_back(Ctilde_n_n(k, tauf));
+		vector<complex<double> > results(2);
+		Ctilde_n_n(k, &results);
+		Ctnn_vec.push_back(results[0]);
+		Ctnn_no_SC_vec.push_back(results[1]);
 	}
 
 	//start computing actual charge balance functions here
@@ -289,7 +214,7 @@ if (1) return (0);*/
 	{
 		double Delta_y = (double)iDy * Delta_y_step;
 
-		complex<double> sum(0,0);
+		complex<double> sum(0,0), sum_no_SC(0,0);
 		for (int ik = 0; ik < n_k_pts; ++ik)
 		{
 			double k = k_pts[ik];
@@ -297,15 +222,19 @@ if (1) return (0);*/
 			complex<double> Ftn1 = Ftn_particle1_vec[ik];
 			complex<double> Ftn2 = Ftn_particle2_vec[ik];
 			complex<double> Ctnn = Ctnn_vec[ik];
+			complex<double> Ctnn_no_SC = Ctnn_no_SC_vec[ik];
 
 			sum += k_wts[ik] * exp(i * k * Delta_y)
 					* ( Ftn1 * conj(Ftn2) * Ctnn );
+			sum_no_SC += k_wts[ik] * exp(i * k * Delta_y)
+					* ( Ftn1 * conj(Ftn2) * Ctnn_no_SC );
 			//cout << k << "   " << (Ftn1 * conj(Ftn2)).real() << "   " << Ctnn.real() << "   " << (Ftn1 * conj(Ftn2) * Ctnn).real() << endl;
 		}
 		//if (1) return (0);
 
 		complex<double> result = (ds*tauf*Tf / (4.0*M_PI*M_PI * norm)) * sum;
-		cout << setprecision(15) << Delta_y << "   " << result.real() << "   " << result.imag() << endl;
+		complex<double> result_no_SC = (ds*tauf*Tf / (4.0*M_PI*M_PI * norm)) * sum_no_SC;
+		cout << setprecision(15) << Delta_y << "   " << result.real() << "   " << result.imag() << "   " << result_no_SC.real() << "   " << result_no_SC.imag() << endl;
 	}
 
 	return 0;
