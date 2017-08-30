@@ -22,20 +22,17 @@ using namespace std;
 int particle_to_study;
 
 const double hbarC = 197.33;
-//const double Cem = 2.0 / 3.0;	//my current best guess
-//const double k_infinity = 10.0;
 const double xi_infinity = 5.0;
+const double k_infinity = 15.0;
+const double k_critical = 0.5 / sqrt(vQ2);
 const int n_Dy = 51;
 
 //const double tauC = 0.5;	//fm/c
 const double DQ = 0.162035;	//fm (rough estimate!)
 //const double vQ2 = DQ/tauQ;	//N.B. - must have tauQ > DQ for sub-luminal speed!
-const double vQ2 = 10.0;
-const double tauC = DQ/vQ2;
-const double tauQ = tauC;	//for consistency with manuscript
-
-const double k_critical = 0.5 / sqrt(vQ2);
-const double k_infinity = 10.0;
+//const double vQ2 = 10.0;
+//const double tauQ = DQ/vQ2;
+double vQ2, tauQ;
 
 long n_interp;
 
@@ -48,9 +45,9 @@ double T0, mu0, Tc, Pc, nc, sc, wc, muc;
 double A0, A2, A4, C0, B, mui, muf, xi0, xibar0, etaBYs, RD, sPERn, Nf, qD, si, ni;
 double a_at_tauf, vs2_at_tauf, vn2_at_tauf, vsigma2_at_tauf;
 
-const int n_xi_pts = 51;
-const int n_k_pts = 50;	//# of k points should be even to avoid poles in 1F1, etc.!!!
-const int n_tau_pts = 51;
+const int n_xi_pts = 201;
+const int n_k_pts = 200;	//# of k points should be even to avoid poles in 1F1, etc.!!!
+const int n_tau_pts = 201;
 double * xi_pts_minf_inf, * xi_wts_minf_inf;
 double * k_pts, * k_wts;
 double * tau_pts, * tau_wts;
@@ -66,6 +63,10 @@ int main(int argc, char *argv[])
 	//Ti = atoi(argv[2]) / hbarC;		//initial trajectory temperature
 	Ti = 250.0 / hbarC;
 	fraction_of_evolution = 1.0;
+
+	//set speed of sound and correlation timescale
+	vQ2 = atof(argv[3]);
+	tauQ = DQ/vQ2;
 
 	set_phase_diagram_and_EOS_parameters();
 

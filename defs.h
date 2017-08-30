@@ -37,7 +37,7 @@ string truestring = "true";
 string falsestring = "false";
 
 bool white_noise = true;
-bool white_Green = true;
+bool white_Green = false;
 
 inline string return_boolean_string(bool test){return (test ? truestring : falsestring);}
 
@@ -49,7 +49,8 @@ struct chosen_particle
 
 extern const double hbarC;
 
-extern const double tauQ, vQ2, DQ, tauC;
+extern const double DQ;
+extern double tauQ, vQ2;
 
 double fraction_of_evolution;
 
@@ -177,12 +178,11 @@ inline double Fn(double x, void * p)
 	struct chosen_particle * params = (struct chosen_particle *)p;
 	double cx = cosh(x);
 	
-	double c1 = 0.0;
 	double c2 = chi_tilde_T_T;
 
 	double mByT = (params->mass) / Tf;
 
-	return ( (c1 * incompleteGamma4(mByT * cx) + c2 * incompleteGamma3(mByT * cx) ) / (cx*cx) );
+	return ( c2 * incompleteGamma3(mByT * cx) ) / (cx*cx) );
 }
 
 inline complex<double> Ftilde_n(double k, void * p)
@@ -328,8 +328,8 @@ inline void tau_integration_coloredGreen(
 					double k, vector<complex<double> > * results)
 {
 	//this function needs to be fixed!!!
-	cerr << "This function hasn't been fully checked for new self-correlation subtractions yet!!!  Exiting..." << endl;
-	if (1) exit (1);
+	//cerr << "This function hasn't been fully checked for new self-correlation subtractions yet!!!  Exiting..." << endl;
+	//if (1) exit (1);
 
 	complex<double> result(0,0);
 	double * local_x_pts = new double [n_tau_pts];
@@ -338,7 +338,7 @@ inline void tau_integration_coloredGreen(
 	double hw_loc = 0.5 * (tauf - taui);
 	double cen_loc = 0.5 * (tauf + taui);
 
-	double self_corr = 0.0;
+	double self_correlation = chi_mumu(Tf) * Tf * tauf;
 
 	for (int it = 0; it < n_tau_pts; ++it)
 	{
@@ -347,17 +347,16 @@ inline void tau_integration_coloredGreen(
 		double T_loc = guess_T(tau_loc);
 		double chi_Q = chi_mumu(T_loc);
 
-		//need two different tau_integration routines because of this!!!
-		double self_correlation = 0.0;
-
 		complex<double> tmp_result = hw_loc * local_x_wts[it] * ( 2.0 * DQ * chi_Q * T_loc / tau_loc ) *
-										( (*Gtilde_X)(k, tauf, tau_loc) * (*Gtilde_Y)(-k, tauf, tau_loc) - self_correlation );
-		self_corr += hw_loc * local_x_wts[it] * ( 2.0 * DQ * chi_Q * T_loc / tau_loc ) * self_correlation;
+										(*Gtilde_X)(k, tauf, tau_loc) * (*Gtilde_Y)(-k, tauf, tau_loc);
 		result += tmp_result;
 	}
 
 	delete [] local_x_pts;
 	delete [] local_x_wts;
+
+	(*results)[0] = result;
+	(*results)[1] = self_correlation - result;
 
 	return;
 }
