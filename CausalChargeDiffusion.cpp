@@ -23,7 +23,7 @@ int particle_to_study;
 
 const double hbarC = 197.33;
 const double xi_infinity = 5.0;
-const double k_infinity = 15.0;
+const double k_infinity = 10.0;
 const double k_critical = 0.5 / sqrt(vQ2);
 const int n_Dy = 51;
 
@@ -45,9 +45,9 @@ double T0, mu0, Tc, Pc, nc, sc, wc, muc;
 double A0, A2, A4, C0, B, mui, muf, xi0, xibar0, etaBYs, RD, sPERn, Nf, qD, si, ni;
 double a_at_tauf, vs2_at_tauf, vn2_at_tauf, vsigma2_at_tauf;
 
-const int n_xi_pts = 201;
-const int n_k_pts = 200;	//# of k points should be even to avoid poles in 1F1, etc.!!!
-const int n_tau_pts = 201;
+const int n_xi_pts = 51;
+const int n_k_pts = 50;	//# of k points should be even to avoid poles in 1F1, etc.!!!
+const int n_tau_pts = 51;
 double * xi_pts_minf_inf, * xi_wts_minf_inf;
 double * k_pts, * k_wts;
 double * tau_pts, * tau_wts;
@@ -179,6 +179,18 @@ int main(int argc, char *argv[])
 	}
 	if (1) return (0);
 	*/
+	/*
+	for (int ik = 0; ik < n_k_pts; ++ik)
+	{
+		double k = k_pts[ik];
+		double tau1 = 0.5*tauf;
+		double tau2 = 0.75*tauf;
+		cout << k << "   " << (Gtilde_n_color(k, tauf, tau1)*Gtilde_n_color(-k, tauf, tau2)).real()
+				<< "   " << (Gtilde_n_color(k, tauf, tau1)*Gtilde_n_color(-k, tauf, tau2)).imag()
+				<< "   " << GG_self_correlations(k, tau1, tau2) << endl;
+	}
+	if (1) return (0);
+	*/
 	//////////////////////////////////////////////////////////
 
 	//get the ensemble averaged spectra
@@ -229,9 +241,9 @@ int main(int argc, char *argv[])
 					* ( Ftn1 * conj(Ftn2) * Ctnn );
 			sum_no_SC += k_wts[ik] * exp(i * k * Delta_y)
 					* ( Ftn1 * conj(Ftn2) * Ctnn_no_SC );
-			//cout << k << "   " << (Ftn1 * conj(Ftn2)).real() << "   " << Ctnn.real() << "   " << (Ftn1 * conj(Ftn2) * Ctnn).real() << endl;
+			cout << k << "   " << Ctnn.real() << "   " << Ctnn_no_SC.real() << endl;
 		}
-		//if (1) return (0);
+		if (1) return (0);
 
 		complex<double> result = (ds*tauf*Tf / (4.0*M_PI*M_PI * norm)) * sum;
 		complex<double> result_no_SC = (ds*tauf*Tf / (4.0*M_PI*M_PI * norm)) * sum_no_SC;
