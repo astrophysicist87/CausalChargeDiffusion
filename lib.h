@@ -19,7 +19,9 @@ using namespace std;
 
 const double tolerance = 1.e-15;
 const std::complex<double> i(0, 1);
-inline double cot(double x){return (cos(x)/sin(x));}
+inline complex<double> cot(complex<double> x){return (cos(x)/sin(x));}
+inline complex<double> csc(complex<double> x){return (1.0/sin(x));}
+inline complex<double> sec(complex<double> x){return (1.0/cos(x));}
 
 double integrate_1D(double (*f)(double), double * xpts, double * xwts, int nx);
 double integrate_1D(double (*f)(double, void *), double * xpts, double * xwts, int nx, void * p);

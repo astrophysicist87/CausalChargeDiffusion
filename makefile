@@ -33,10 +33,10 @@ OBJS= $(addsuffix .o, $(basename $(SRCS)))
 
 CC= g++
 CFLAGS=  -pg -g -O3
-WARNFLAGS= -ansi -pedantic -Wall -W \
-   -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align \
-   -Wwrite-strings -fshort-enums -fno-common 
-#WARNFLAGS=
+#WARNFLAGS= -ansi -pedantic -Wall -W \
+#   -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align \
+#   -Wwrite-strings -fshort-enums -fno-common 
+WARNFLAGS=
 LDFLAGS= -lgsl -lgslcblas 
 LIBS= -L/sw/lib -I/sw/include
  

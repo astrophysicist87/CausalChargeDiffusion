@@ -354,6 +354,49 @@ inline complex<double> asymptotic_Gtilde_n_color(double k, double tau, double ta
 }
 
 
+inline complex<double> new_asymptotic_Gtilde_n_color(complex<double> k, double tau, double taup)
+{
+	double x = tau / tauQ;
+	double xp = taup / tauQ;
+	complex<double> one_fourth = 0.25;
+	complex<double> lambda = sqrt(one_fourth - vQ2*k*k);
+
+	complex<double> prefactor = 0.25*M_PI*sqrt( taup / tau )
+						* exp( 0.5 * (xp - x) )
+						* csc(M_PI * lambda);
+	double vQ = sqrt(vQ2);
+
+	complex<double> I_lambda_x_by_2 = asymptotics::I(lambda, 0.5*x);
+	complex<double> I_prime_lambda_x_by_2 = asymptotics::Iprime(lambda, 0.5*x);
+	complex<double> I_mlambda_x_by_2 = asymptotics::I(-lambda, 0.5*x);
+	complex<double> I_prime_mlambda_x_by_2 = asymptotics::Iprime(-lambda, 0.5*x);
+
+	complex<double> I_lambda_xp_by_2 = asymptotics::I(lambda, 0.5*xp);
+	complex<double> I_mlambda_xp_by_2 = asymptotics::I(-lambda, 0.5*xp);
+
+	complex<double> term1 = ( (x + 1.0) * I_lambda_x_by_2 + x * I_prime_lambda_x_by_2 )
+							* I_mlambda_xp_by_2;
+	complex<double> term2 = ( (x + 1.0) * I_mlambda_x_by_2 + x * I_prime_mlambda_x_by_2 )
+							* I_lambda_xp_by_2;
+
+cout << "new_asymp_G(): " << k << "   " << lambda << "   " << x << "   " << xp << "   "
+		<< I_lambda_x_by_2 << "   "
+		<< I_prime_lambda_x_by_2 << "   "
+		<< I_mlambda_x_by_2 << "   "
+		<< I_prime_mlambda_x_by_2 << "   "
+		//<< I_lambda_xp_by_2 << "   "
+		//<< I_mlambda_xp_by_2 << "   "
+		//<< term1 << "   " << term2
+		<< endl;
+
+	complex<double> mainfactor = term1 - term2;
+	//complex<double> mainfactor = 2.0*term1.real();
+
+	return ( i*k*prefactor*mainfactor );
+}
+
+
+
 inline double GG_self_correlations(double k, double tau1p, double tau2p)
 {
 	double xf = tauf / tauQ;

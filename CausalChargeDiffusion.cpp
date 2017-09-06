@@ -23,8 +23,8 @@ int particle_to_study;
 
 const double hbarC = 197.33;
 const double xi_infinity = 5.0;
-const double k_infinity = 10.0;
-const double k_critical = 0.5 / sqrt(vQ2);
+const double k_infinity = 1.6;
+//const double k_critical = 0.5 / sqrt(vQ2);
 const int n_Dy = 51;
 
 //const double tauC = 0.5;	//fm/c
@@ -134,14 +134,14 @@ int main(int argc, char *argv[])
 	chi_tilde_T_T = chi_T_T / Delta;
 
 	//output some parameters from calculation
-	cout 	<< "#########################################################" << endl
+	/*cout 	<< "#########################################################" << endl
 			<< "# Using following parameters:" << endl
 			<< "# taui = " << taui << " fm/c, tauf = " << tauf << " fm/c" << endl
 			<< "# si = " << si << ", sf = " << sf << endl
 			<< "# Ti = " << Ti*hbarC << " MeV, Tf = " << Tf*hbarC << " MeV" << endl
 			<< "# v_Q^2 = " << vQ2 << ", D_Q = " << DQ << " fm/c, tau_Q = " << tauQ << " fm/c" << endl
 			<< "# chi_{T,T} = " << chi_T_T << ", chi_{T,mu} = chi_{mu,T} = " << chi_T_mu << ", chi_{mu,mu} = " << chi_mu_mu << endl
-			<< "#########################################################" << endl;
+			<< "#########################################################" << endl;*/
 
     // set up grid points for integrations
     xi_pts_minf_inf = new double [n_xi_pts];
@@ -153,7 +153,6 @@ int main(int argc, char *argv[])
 
     int tmp = gauss_quadrature(n_xi_pts, 1, 0.0, 0.0, -xi_infinity, xi_infinity, xi_pts_minf_inf, xi_wts_minf_inf);
     tmp = gauss_quadrature(n_k_pts, 1, 0.0, 0.0, -k_infinity, k_infinity, k_pts, k_wts);
-	//tmp = gauss_quadrature(n_k_pts, 6, 0.0, 0.0, 0.0, 1.0/(k_infinity*k_critical), k_pts, k_wts);
     tmp = gauss_quadrature(n_tau_pts, 1, 0.0, 0.0, taui, tauf, tau_pts, tau_wts);
 
 	T_pts = new double [n_tau_pts];
@@ -179,18 +178,26 @@ int main(int argc, char *argv[])
 	}
 	if (1) return (0);
 	*/
-	/*
+
+	complex<double> nu = 20.0*i;
+	complex<double> z = 1.0;
+	cout << "result = " << asymptotics::I(nu, z) << endl;
+	cout << "result(prime) = " << asymptotics::Iprime(nu, z) << endl;
+	if (1) return (0);
+	
+	/*const double k_critical = 0.5 / sqrt(vQ2);
+	cerr << "k_c: " << vQ2 << "   " << k_critical << endl;*/
 	for (int ik = 0; ik < n_k_pts; ++ik)
 	{
 		double k = k_pts[ik];
-		double tau1 = 0.5*tauf;
+		double tau1 = 0.99*tauf;
 		double tau2 = 0.75*tauf;
-		cout << k << "   " << (Gtilde_n_color(k, tauf, tau1)*Gtilde_n_color(-k, tauf, tau2)).real()
-				<< "   " << (Gtilde_n_color(k, tauf, tau1)*Gtilde_n_color(-k, tauf, tau2)).imag()
-				<< "   " << GG_self_correlations(k, tau1, tau2) << endl;
+		cout << "***" << k << "   " << Gtilde_n_color(k, tauf, tau1).imag()
+				<< "   " << new_asymptotic_Gtilde_n_color(k, tauf, tau1).imag() << endl;
+	if (ik >= 2) return (0);
 	}
 	if (1) return (0);
-	*/
+	
 	//////////////////////////////////////////////////////////
 
 	//get the ensemble averaged spectra
