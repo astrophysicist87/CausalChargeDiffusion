@@ -23,7 +23,7 @@ int particle_to_study;
 
 const double hbarC = 197.33;
 const double xi_infinity = 5.0;
-const double k_infinity = 1.6;
+const double k_infinity = 10.0;
 //const double k_critical = 0.5 / sqrt(vQ2);
 const int n_Dy = 51;
 
@@ -179,14 +179,14 @@ int main(int argc, char *argv[])
 	if (1) return (0);
 	*/
 
-	complex<double> nu = 20.0*i;
+	/*complex<double> nu = 20.0*i;
 	complex<double> z = 1.0;
 	cout << "result = " << asymptotics::I(nu, z) << endl;
 	cout << "result(prime) = " << asymptotics::Iprime(nu, z) << endl;
 	if (1) return (0);
 	
-	/*const double k_critical = 0.5 / sqrt(vQ2);
-	cerr << "k_c: " << vQ2 << "   " << k_critical << endl;*/
+	const double k_critical = 0.5 / sqrt(vQ2);
+	cerr << "k_c: " << vQ2 << "   " << k_critical << endl;
 	for (int ik = 0; ik < n_k_pts; ++ik)
 	{
 		double k = k_pts[ik];
@@ -196,7 +196,7 @@ int main(int argc, char *argv[])
 				<< "   " << new_asymptotic_Gtilde_n_color(k, tauf, tau1).imag() << endl;
 	if (ik >= 2) return (0);
 	}
-	if (1) return (0);
+	if (1) return (0);*/
 	
 	//////////////////////////////////////////////////////////
 
@@ -248,9 +248,9 @@ int main(int argc, char *argv[])
 					* ( Ftn1 * conj(Ftn2) * Ctnn );
 			sum_no_SC += k_wts[ik] * exp(i * k * Delta_y)
 					* ( Ftn1 * conj(Ftn2) * Ctnn_no_SC );
-			cout << k << "   " << Ctnn.real() << "   " << Ctnn_no_SC.real() << endl;
+			//cout << k << "   " << Ctnn.real() << "   " << Ctnn_no_SC.real() << endl;
 		}
-		if (1) return (0);
+		//if (1) return (0);
 
 		complex<double> result = (ds*tauf*Tf / (4.0*M_PI*M_PI * norm)) * sum;
 		complex<double> result_no_SC = (ds*tauf*Tf / (4.0*M_PI*M_PI * norm)) * sum_no_SC;

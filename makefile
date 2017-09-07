@@ -20,7 +20,6 @@ HDRS= \
 gauss_quadrature.h \
 defs.h \
 lib.h \
-asymptotics.h \
 $(SFLDIR)/cmlib.h \
 $(SFLDIR)/complex.h \
 $(SFLDIR)/protom.h
