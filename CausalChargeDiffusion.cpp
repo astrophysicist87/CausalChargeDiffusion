@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
 	*/
 
 	complex<double> nu = 10.0*i;
-	complex<double> z = 10.0;
+	double z = 20.0;
 	cout << "result = " << asymptotics::I(nu, z) << endl;
 	if (1) return (0);
 	
