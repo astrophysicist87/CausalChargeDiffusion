@@ -181,11 +181,9 @@ int main(int argc, char *argv[])
 	if (1) return (0);
 	*/
 
-	complex<double> z = 10.0 + 13.0*i;
-	complex<double> Ai(0,0), Ai_prime(0,0), Bi(0,0), Bi_prime(0,0);
-	asymptotics::get_AiryFunctions(	z, Ai, Ai_prime, Bi, Bi_prime);
-	cout << "results: " << Ai << "   " << Ai_prime << "   " << Bi << "   " << Bi_prime << endl;
-	//cout << "result(prime) = " << asymptotics::Iprime(nu, z) << endl;
+	complex<double> nu = 10.0*i;
+	complex<double> z = 10.0;
+	cout << "result = " << asymptotics::I(nu, z) << endl;
 	if (1) return (0);
 	
 	/*const double k_critical = 0.5 / sqrt(vQ2);
