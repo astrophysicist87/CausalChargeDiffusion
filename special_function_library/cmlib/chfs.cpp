@@ -85,9 +85,10 @@ namespace SFL
 		return 0;
 	}
 
-	Airy(struct complex *z, struct complex *ans)
+	int Airy(struct complex *z, struct complex *ans)
 	{
-		struct complex a,b,c,d,z3h;double factor;double pow(),sqrt();
+		struct complex a,b,c,d,z3h;
+		double factor;
 		int oldarg;
 		oldarg=argrot;
 		CMPLX(a,5./6.,0.);

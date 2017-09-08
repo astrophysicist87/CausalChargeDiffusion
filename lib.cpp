@@ -8,10 +8,6 @@
 
 #include <gsl/gsl_integration.h>
 
-//#include "./special_function_library/cmlib/cmlib.h"
-//#include "./special_function_library/cmlib/complex.h"
-//#include "./special_function_library/cmlib/protom.h"
-
 using namespace std;
 
 #include "lib.h"

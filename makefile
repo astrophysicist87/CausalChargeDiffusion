@@ -7,6 +7,7 @@ CausalChargeDiffusion.cpp \
 gauss_quadrature.cpp \
 lib.cpp \
 $(SFLDIR)/chf.cpp \
+$(SFLDIR)/chfs.cpp \
 $(SFLDIR)/complex.cpp \
 $(SFLDIR)/g.cpp \
 $(SFLDIR)/f211.cpp \

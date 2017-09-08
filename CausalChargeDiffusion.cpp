@@ -14,6 +14,7 @@
 using namespace std;
 
 #include "defs.h"
+#include "asymptotics.h"
 
 //const int particle_to_study
 	// 1 - pion
@@ -54,6 +55,7 @@ double * tau_pts, * tau_wts;
 double * T_pts;
 double * running_integral_array;
 
+///////////////////////////////////////////////////////////////
 int main(int argc, char *argv[])
 {
 	//set parameters from command-line input
@@ -179,13 +181,14 @@ int main(int argc, char *argv[])
 	if (1) return (0);
 	*/
 
-	/*complex<double> nu = 20.0*i;
-	complex<double> z = 1.0;
-	cout << "result = " << asymptotics::I(nu, z) << endl;
-	cout << "result(prime) = " << asymptotics::Iprime(nu, z) << endl;
+	complex<double> z = 10.0 + 13.0*i;
+	complex<double> Ai(0,0), Ai_prime(0,0), Bi(0,0), Bi_prime(0,0);
+	asymptotics::get_AiryFunctions(	z, Ai, Ai_prime, Bi, Bi_prime);
+	cout << "results: " << Ai << "   " << Ai_prime << "   " << Bi << "   " << Bi_prime << endl;
+	//cout << "result(prime) = " << asymptotics::Iprime(nu, z) << endl;
 	if (1) return (0);
 	
-	const double k_critical = 0.5 / sqrt(vQ2);
+	/*const double k_critical = 0.5 / sqrt(vQ2);
 	cerr << "k_c: " << vQ2 << "   " << k_critical << endl;
 	for (int ik = 0; ik < n_k_pts; ++ik)
 	{
