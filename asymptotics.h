@@ -106,7 +106,7 @@ namespace asymptotics
 			double new_factor = arg / ( (k+1.0) * (k+1.0+nu) );
 			next_term *= new_factor;
 			k++;
-		} while ( 2.0*abs(sum-oldsum)/abs(sum+oldsum) >= 1e-6 );
+		} while ( 2.0*abs(sum-oldsum)/abs(sum+oldsum) >= 1e-20 );
 
 		return ( pow(0.5*z, nu)*sum );
 	}
@@ -153,7 +153,7 @@ namespace asymptotics
 
 		get_BesselI_for_Airy( arg, I_m2_3_arg, I_m1_3_arg, I_1_3_arg, I_2_3_arg);
 
-cout << setprecision(20) << arg << "   " << I_m2_3_arg << "   " << I_m1_3_arg << "   " << I_1_3_arg << "   " << I_2_3_arg << endl;
+//cout << setprecision(20) << arg << "   " << I_m2_3_arg << "   " << I_m1_3_arg << "   " << I_1_3_arg << "   " << I_2_3_arg << endl;
 
 		//now set Airy functions and their derivatives
 		result_Ai = sz*( I_m1_3_arg - I_1_3_arg ) / 3.0;
@@ -171,6 +171,8 @@ cout << setprecision(20) << arg << "   " << I_m2_3_arg << "   " << I_m1_3_arg <<
 		double z_re = z.real();
 
 		get_AiryFunctions(z_re, Ai, Ai_prime, Bi, Bi_prime);
+
+cout << "Airy(): " << setprecision(20) << z_re << "   " << Ai << "   " << Ai_prime << "   " << Bi << "   " << Bi_prime << endl;
 
 		Bi_nu = Bi - i * tanh(M_PI*nu) * Ai;
 		Bi_nu_prime = Bi_prime - i * tanh(M_PI*nu) * Ai_prime;
@@ -191,17 +193,23 @@ cout << setprecision(20) << arg << "   " << I_m2_3_arg << "   " << I_m1_3_arg <<
 	}
 
 	//not necessary
-	inline complex<double> A_0(double z, complex<double> local_zeta)
+	//inline complex<double> A_0(double x, complex<double> local_zeta)
+	inline double A_0(double x, double local_zeta)
 	{
 		return (1.0);
 	}
 
-	inline complex<double> B_0(double x, complex<double> local_zeta)
+	//inline complex<double> B_0(double x, complex<double> local_zeta)
+	inline double B_0(double x, double local_zeta)
 	{
 		return (
+				//-5.0 / (48.0 * local_zeta * local_zeta)
+				//+ sqrt(4.0 * local_zeta / ( one - x * x ))
+				//	* ( 5.0 / ( one - x * x ) - 3.0 )
+				//	/ (48.0 * local_zeta)
 				-5.0 / (48.0 * local_zeta * local_zeta)
-				+ sqrt(4.0 * local_zeta / ( one - x * x ))
-					* ( 5.0 / ( one - x * x ) - 3.0 )
+				+ sqrt(4.0 * local_zeta / ( 1.0 - x * x ))
+					* ( 5.0 / ( 1.0 - x * x ) - 3.0 )
 					/ (48.0 * local_zeta)
 				);
 	}
@@ -219,17 +227,20 @@ cout << setprecision(20) << arg << "   " << I_m2_3_arg << "   " << I_m1_3_arg <<
 
 		double nu = nu_in.imag();
 		double r = z/nu;
-		complex<double> extra_phase = (r*r >= 1.0 ) ? -pow(-one, 0.875) : one;
 		double nu_to_1_3 = pow(nu, 1.0/3.0);
 		double nu_to_2_3 = nu_to_1_3 * nu_to_1_3;
 		double nu_to_4_3 = nu_to_2_3 * nu_to_2_3;
-		complex<double> zeta_at_r = zeta(r);
+		//complex<double> zeta_at_r = zeta(r);
+		double zeta_at_r = (zeta(r)).real();
 
 		//assume z != 1.0
-		complex<double> prefactor = 0.5 * exp(0.5*nu*M_PI) * pow( 4.0*zeta_at_r.real() / (one-r*r), 0.25 ) / nu_to_1_3;
+		//complex<double> prefactor = 0.5 * exp(0.5*nu*M_PI) * pow( 4.0*zeta_at_r / (one-r*r), 0.25 ) / nu_to_1_3;
+		double prefactor = 0.5 * exp(0.5*nu*M_PI) * pow( 4.0*zeta_at_r / (1.0-r*r), 0.25 ) / nu_to_1_3;
 		complex<double> Bi_nu(0,0), Bi_nu_prime(0,0);
-		complex<double> A0 = A_0(r, zeta_at_r);	//not necessary
-		complex<double> B0 = B_0(r, zeta_at_r.real());
+		//complex<double> A0 = A_0(r, zeta_at_r);	//not necessary
+		//complex<double> B0 = B_0(r, zeta_at_r);
+		double A0 = A_0(r, zeta_at_r);	//not necessary
+		double B0 = B_0(r, zeta_at_r);
 
 		get_Bi_nu_and_Bi_nu_prime(nu, -nu_to_2_3*zeta_at_r, Bi_nu, Bi_nu_prime);
 cout << setprecision(20) << nu << "   " << z << "   " << Bi_nu << "   " << Bi_nu_prime << endl;
