@@ -55,6 +55,9 @@ double * tau_pts, * tau_wts;
 double * T_pts;
 double * running_integral_array;
 
+const int n_integ_besselK_points = 101;
+vector<double> x_integ_besselK_pts(n_integ_besselK_points), x_integ_besselK_wts(n_integ_besselK_points);
+
 ///////////////////////////////////////////////////////////////
 int main(int argc, char *argv[])
 {
@@ -156,6 +159,7 @@ int main(int argc, char *argv[])
     int tmp = gauss_quadrature(n_xi_pts, 1, 0.0, 0.0, -xi_infinity, xi_infinity, xi_pts_minf_inf, xi_wts_minf_inf);
     tmp = gauss_quadrature(n_k_pts, 1, 0.0, 0.0, -k_infinity, k_infinity, k_pts, k_wts);
     tmp = gauss_quadrature(n_tau_pts, 1, 0.0, 0.0, taui, tauf, tau_pts, tau_wts);
+    tmp = gauss_quadrature(n_integ_besselK_points, 1, 0.0, 0.0, -1.0, 1.0, x_integ_besselK_pts, x_integ_besselK_wts);
 
 	T_pts = new double [n_tau_pts];
 
@@ -181,9 +185,19 @@ int main(int argc, char *argv[])
 	if (1) return (0);
 	*/
 
-	complex<double> nu = 10.0*i;
-	double z = 20.0;
-	cout << "result = " << asymptotics::I(nu, z) << endl;
+	complex<double> nuBIG = 10.0*i;
+	complex<double> nuSMALL = 0.05*i;
+	long double z = 30.0;
+	complex<double> result1 = asymptotics::I(nuBIG, z);
+	cout << setprecision(20) << z << "   " << result1.real() << "   " << result1.imag() << endl;
+	/*for (int iz = 0; iz <= 1000; ++iz)
+	{
+		long double z = 1.0 + 0.06 * iz;
+		complex<double> result1 = asymptotics::I(nuBIG, z);
+		complex<double> result2 = asymptotics::I(nuSMALL, z);
+		cout << z << "   " << result1.real() << "   " << result1.imag()
+				<< "   " << result2.real() << "   " << result2.imag() << endl;
+	}*/
 	if (1) return (0);
 	
 	/*const double k_critical = 0.5 / sqrt(vQ2);
