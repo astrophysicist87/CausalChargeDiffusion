@@ -24,9 +24,9 @@ int particle_to_study;
 
 const double hbarC = 197.33;
 const double xi_infinity = 5.0;
-const double k_infinity = 10.0;
+const double k_infinity = 50.0;
 //const double k_critical = 0.5 / sqrt(vQ2);
-const int n_Dy = 51;
+const int n_Dy = 501;
 
 //const double tauC = 0.5;	//fm/c
 const double DQ = 0.162035;	//fm (rough estimate!)
@@ -46,8 +46,8 @@ double T0, mu0, Tc, Pc, nc, sc, wc, muc;
 double A0, A2, A4, C0, B, mui, muf, xi0, xibar0, etaBYs, RD, sPERn, Nf, qD, si, ni;
 double a_at_tauf, vs2_at_tauf, vn2_at_tauf, vsigma2_at_tauf;
 
-const int n_xi_pts = 51;
-const int n_k_pts = 50;	//# of k points should be even to avoid poles in 1F1, etc.!!!
+const int n_xi_pts = 5000;
+const int n_k_pts = 500;	//# of k points should be even to avoid poles in 1F1, etc.!!!
 const int n_tau_pts = 51;
 double * xi_pts_minf_inf, * xi_wts_minf_inf;
 double * k_pts, * k_wts;
@@ -55,8 +55,8 @@ double * tau_pts, * tau_wts;
 double * T_pts;
 double * running_integral_array;
 
-const int n_integ_besselK_points = 101;
-vector<double> x_integ_besselK_pts(n_integ_besselK_points), x_integ_besselK_wts(n_integ_besselK_points);
+//const int n_integ_besselK_points = 101;
+//vector<double> x_integ_besselK_pts(n_integ_besselK_points), x_integ_besselK_wts(n_integ_besselK_points);
 
 ///////////////////////////////////////////////////////////////
 int main(int argc, char *argv[])
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 	set_phase_diagram_and_EOS_parameters();
 
 	//other constants
-	double Delta_y_step = 0.1;
+	double Delta_y_step = 0.01;
 
 	switch (particle1.index)
 	{
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
     int tmp = gauss_quadrature(n_xi_pts, 1, 0.0, 0.0, -xi_infinity, xi_infinity, xi_pts_minf_inf, xi_wts_minf_inf);
     tmp = gauss_quadrature(n_k_pts, 1, 0.0, 0.0, -k_infinity, k_infinity, k_pts, k_wts);
     tmp = gauss_quadrature(n_tau_pts, 1, 0.0, 0.0, taui, tauf, tau_pts, tau_wts);
-    tmp = gauss_quadrature(n_integ_besselK_points, 1, 0.0, 0.0, -1.0, 1.0, x_integ_besselK_pts, x_integ_besselK_wts);
+    //tmp = gauss_quadrature(n_integ_besselK_points, 1, 0.0, 0.0, -1.0, 1.0, x_integ_besselK_pts, x_integ_besselK_wts);
 
 	T_pts = new double [n_tau_pts];
 
@@ -185,31 +185,38 @@ int main(int argc, char *argv[])
 	if (1) return (0);
 	*/
 
-	complex<double> nuBIG = 10.0*i;
+	/*complex<double> nuBIG = 10.0*i;
 	complex<double> nuSMALL = 0.05*i;
 	long double z = 30.0;
 	complex<double> result1 = asymptotics::I(nuBIG, z);
 	cout << setprecision(20) << z << "   " << result1.real() << "   " << result1.imag() << endl;
-	/*for (int iz = 0; iz <= 1000; ++iz)
+	complex<double> result2 = asymptotics::Iprime(nuBIG, z);
+	cout << setprecision(20) << z << "   " << result2.real() << "   " << result2.imag() << endl;
+	cout << setprecision(20) << asymptotics::zeta_prime(0.5) << "   "
+			<< asymptotics::zeta_prime(2.0) << endl;
+	cout << asymptotics::B_0_prime(0.5, asymptotics::zeta(0.5), asymptotics::zeta_prime(0.5)) << "   "
+			<< asymptotics::B_0_prime(2.0, asymptotics::zeta(2.0), asymptotics::zeta_prime(2.0)) << endl;
+	for (int iz = 0; iz <= 1000; ++iz)
 	{
 		long double z = 1.0 + 0.06 * iz;
 		complex<double> result1 = asymptotics::I(nuBIG, z);
 		complex<double> result2 = asymptotics::I(nuSMALL, z);
 		cout << z << "   " << result1.real() << "   " << result1.imag()
 				<< "   " << result2.real() << "   " << result2.imag() << endl;
-	}*/
-	if (1) return (0);
-	
-	/*const double k_critical = 0.5 / sqrt(vQ2);
-	cerr << "k_c: " << vQ2 << "   " << k_critical << endl;
-	for (int ik = 0; ik < n_k_pts; ++ik)
+	}
+	if (1) return (0);*/
+
+	const double k_critical = 0.5 / sqrt(vQ2);
+	/*cerr << "k_c: " << vQ2 << "   " << k_critical << endl;*/
+	/*for (int ik = 0; ik < n_k_pts; ++ik)
 	{
 		double k = k_pts[ik];
-		double tau1 = 0.99*tauf;
-		double tau2 = 0.75*tauf;
-		cout << "***" << k << "   " << Gtilde_n_color(k, tauf, tau1).imag()
+		if (k*k < k_critical*k_critical)
+			continue;
+		double tau1 = 0.5*tauf;
+		cout << k << "   " << Gtilde_n_white(k, tauf, tau1).imag() << "   " << Gtilde_n_color(k, tauf, tau1).imag()
 				<< "   " << new_asymptotic_Gtilde_n_color(k, tauf, tau1).imag() << endl;
-	if (ik >= 2) return (0);
+	//if (ik >= 2) return (0);
 	}
 	if (1) return (0);*/
 	
@@ -263,7 +270,10 @@ int main(int argc, char *argv[])
 					* ( Ftn1 * conj(Ftn2) * Ctnn );
 			sum_no_SC += k_wts[ik] * exp(i * k * Delta_y)
 					* ( Ftn1 * conj(Ftn2) * Ctnn_no_SC );
-			//cout << k << "   " << Ctnn.real() << "   " << Ctnn_no_SC.real() << endl;
+			cerr << k << "   " << Ctnn.real() << "   " << Ctnn_no_SC.real() 
+					<< "   " << (Ftn1 * conj(Ftn2)).real()
+					<< "   " << (Ftn1 * conj(Ftn2) * Ctnn).real()
+					<< "   " << (Ftn1 * conj(Ftn2) * Ctnn_no_SC).real() << endl;
 		}
 		//if (1) return (0);
 

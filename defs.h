@@ -18,7 +18,7 @@ using namespace std;
 
 #include "gauss_quadrature.h"
 #include "lib.h"
-//#include "asymptotics.h"
+#include "asymptotics.h"
 
 /*USAGE:
 debugger(__LINE__, __FILE__);
@@ -37,7 +37,7 @@ inline int sgn(T val) {
 string truestring = "true";
 string falsestring = "false";
 
-bool white_noise = false;
+bool white_noise = true;
 bool white_Green = false;
 
 inline string return_boolean_string(bool test){return (test ? truestring : falsestring);}
@@ -281,6 +281,174 @@ inline complex<double> Gtilde_n_color(double k, double tau, double taup)
 	return ( i * k * result ); //dimensionless
 }
 
+//define some functions for subtracting off singularities from product of colored Green's functions
+inline double g1(double x)
+{
+	double x2 = x*x;
+	return (
+				-x2/16.0 - x/2.0 - log(x)/8.0
+			); 
+}
+
+inline double g2(double x)
+{
+	double x2 = x*x;
+	double x3 = x2*x;
+	double x4 = x2*x2;
+	double lnx = log(x);
+	double lnx2 = lnx*lnx;
+	return (
+				x4/512.0 + x3/32.0 + x2/16.0 - x/4.0 + x2*lnx/128 + x*lnx/16.0 + lnx2/128.0
+			);
+}
+
+inline double B1(double x, double xp)
+{
+	return (
+				g1(xp) - g1(x) + (xp + 1.0) / 2.0
+			);
+}
+
+inline double B2(double x, double xp)
+{
+	double g1xp = g1(xp);
+	double Del_g1 = g1xp - g1(x);
+	double Del_g2 = g2(xp) - g2(x);
+
+	return (
+			0.5 * Del_g1 * (2.0 * g1xp + xp + 1.0) - Del_g2
+			);
+}
+
+
+inline complex<double> asymptotic_Gtilde_n_color(double k, double tau, double taup)
+{
+	double x = tau / tauQ;
+	double xp = taup / tauQ;
+	double prefactor = sqrt( taup / tau )
+						* exp( 0.5 * (xp - x) );
+	//double lambda = sqrt(k*k*vQ2 - 0.25);
+	double vQ = sqrt(vQ2);
+
+	double B1_x_xp = B1(x, xp);
+	double B2_x_xp = B2(x, xp);
+	double arg = k*vQ*log(x/xp);
+
+	double mainfactor = cos(arg) + (B1_x_xp / (k*vQ)) * sin(arg) - (B2_x_xp / (k*k*vQ2)) * cos(arg);
+
+	return ( i*k*prefactor*mainfactor );
+}
+
+inline complex<double> new_asymptotic_Gtilde_n_color(complex<double> k, double tau, double taup)
+{
+	double x = tau / tauQ;
+	double xp = taup / tauQ;
+	complex<double> one_fourth = 0.25;
+	complex<double> lambda = sqrt(one_fourth - vQ2*k*k);
+
+	complex<double> prefactor = 0.25*M_PI*sqrt( taup / tau )
+						* exp( 0.5 * (xp - x) )
+						* csc(M_PI * lambda);
+	double vQ = sqrt(vQ2);
+
+
+	complex<double> mainfactor = 4.0 * lambda * exp(0.5*(x+xp)) / (M_PI*sqrt(x*xp));
+
+	//if ( lambda.real() <= 1.e-10 )
+	//{
+		complex<double> I_lambda_x_by_2 = asymptotics::I(lambda, 0.5*x);
+		complex<double> I_prime_lambda_x_by_2 = asymptotics::Iprime(lambda, 0.5*x);
+		complex<double> I_mlambda_x_by_2 = asymptotics::I(-lambda, 0.5*x);
+		complex<double> I_prime_mlambda_x_by_2 = asymptotics::Iprime(-lambda, 0.5*x);
+
+		complex<double> I_lambda_xp_by_2 = asymptotics::I(lambda, 0.5*xp);
+		complex<double> I_mlambda_xp_by_2 = asymptotics::I(-lambda, 0.5*xp);
+
+		complex<double> term1 = ( (x + 1.0) * I_lambda_x_by_2 + x * I_prime_lambda_x_by_2 )
+								* I_mlambda_xp_by_2;
+		complex<double> term2 = ( (x + 1.0) * I_mlambda_x_by_2 + x * I_prime_mlambda_x_by_2 )
+								* I_lambda_xp_by_2;
+
+		/*cout << "new_asymp_G(): " << k << "   " << lambda << "   " << x << "   " << xp << endl << "\t\t"
+				<< I_lambda_x_by_2 << "   "
+				<< I_prime_lambda_x_by_2 << "   "
+				<< I_mlambda_x_by_2 << "   "
+				<< I_prime_mlambda_x_by_2 << endl << "\t\t"
+				<< I_lambda_xp_by_2 << "   "
+				<< I_mlambda_xp_by_2 << "   "
+				<< term1 << "   " << term2
+				<< endl;*/
+
+		mainfactor = term1 - term2;
+	//}
+
+	return ( i*k*prefactor*mainfactor );
+}
+
+inline complex<double> GG_self_correlations(double k, double tau1p, double tau2p)
+{
+	if (0)
+	{
+		complex<double> result = new_asymptotic_Gtilde_n_color(k, tauf, tau1p)
+						* new_asymptotic_Gtilde_n_color(-k, tauf, tau2p);
+
+		result = asymptotic_Gtilde_n_color(k, tauf, tau1p)
+						* asymptotic_Gtilde_n_color(-k, tauf, tau2p);
+
+		return (result);
+	}
+	else if (1)
+	{
+		double xf = tauf / tauQ;
+		double x1p = tau1p / tauQ;
+		double x2p = tau2p / tauQ;
+		double prefactor = sqrt( tau1p*tau2p / (tauf*tauf) )
+							* exp( 0.5 * (x1p + x2p) - xf )
+							/ (2.0*vQ2);
+		double vQ = sqrt(vQ2);
+		double arg = vQ * k * log(tau2p/tau1p);
+
+		double B1_xf_x1p = B1(xf, x1p);
+		double B1_xf_x2p = B1(xf, x2p);
+		double B2_xf_x1p = B2(xf, x1p);
+		double B2_xf_x2p = B2(xf, x2p);
+
+		double C1 = vQ2 * k * k + B1_xf_x1p * B1_xf_x2p - B2_xf_x1p - B2_xf_x2p;
+		double C2 = vQ * k * (B1_xf_x1p - B1_xf_x2p);
+
+		double final_result = prefactor * ( C1 * cos(arg) + C2 * sin(arg) );
+		return (final_result);
+	}
+	else
+	{
+		double xf = tauf / tauQ;
+		double x1p = tau1p / tauQ;
+		double x2p = tau2p / tauQ;
+		double prefactor = sqrt( tau1p*tau2p / (tauf*tauf) )
+							* exp( 0.5 * (x1p + x2p) - xf )
+							/ (2.0*vQ2);
+		double vQ = sqrt(vQ2);
+
+		double B1_xf_x1p = B1(xf, x1p);
+		double B1_xf_x2p = B1(xf, x2p);
+		double B2_xf_x1p = B2(xf, x1p);
+		double B2_xf_x2p = B2(xf, x2p);
+
+		double arg1 = vQ * k * log(tau1p/tau2p);
+		double arg2 = vQ * k * log(tau1p*tau2p/(tauf*tauf));
+		double c1 = cos(arg1);
+		double c2 = cos(arg2);
+		double s1 = sin(arg1);
+		double s2 = sin(arg2);
+
+		double result = vQ2*k*k*(c1+c2)
+						- vQ*k*( (s1+s2)*B1_xf_x1p + (-s1+s2)*B1_xf_x2p )
+						+ (c1-c2)*B1_xf_x1p*B1_xf_x2p - (c1+c2)*(B2_xf_x1p + B2_xf_x2p);
+
+		return ( prefactor * result );
+	}
+}
+
 inline void tau_integration_WhiteGreen(
 					complex<double> (*Gtilde_X)(double, double, double),
 					complex<double> (*Gtilde_Y)(double, double, double),
@@ -347,18 +515,19 @@ inline void tau_integration_coloredGreen(
 		complex<double> tmp_result = hw_loc * local_x_wts[it] * ( 2.0 * DQ * chi_Q * T_loc / tau_loc ) *
 										(*Gtilde_X)(k, tauf, tau_loc) * (*Gtilde_Y)(-k, tauf, tau_loc);
 		result += tmp_result;
-		//SC_result += hw_loc * local_x_wts[it] * ( 2.0 * DQ * chi_Q * T_loc / tau_loc ) *
-		//								GG_self_correlations(k, tau_loc, tau_loc);
+		SC_result += hw_loc * local_x_wts[it] * ( 2.0 * DQ * chi_Q * T_loc / tau_loc ) *
+										GG_self_correlations(k, tau_loc, tau_loc);
 	}
 
 	delete [] local_x_pts;
 	delete [] local_x_wts;
 
 	//cout << "Sanity check: " << k << "   " << self_correlation << "   " << SC_result.real() << "   " << result.real() << endl;
+	//if (1) exit(0);
 
 	(*results)[0] = result;
-	(*results)[1] = self_correlation - result;
-	//(*results)[1] = SC_result - result;
+	//(*results)[1] = self_correlation - result;
+	(*results)[1] = SC_result - result;
 
 	return;
 }
@@ -457,10 +626,10 @@ inline void colored_tau_integration(
 
 			double sum_XY = exp(-abs(tX_loc - tY_loc) / tauQ) * eta_at_min_tp_tpp / (2.0*tauQ);
 			sum_X += hw_loc * x_wts[ix] * factor_X * factor_Y * sum_XY;
-			//sum_SC_X += hw_loc * x_wts[ix] * sX_loc * sY_loc * GG_self_correlations(k, tX_loc, tY_loc) * sum_XY;
+			sum_SC_X += hw_loc * x_wts[ix] * sX_loc * sY_loc * GG_self_correlations(k, tX_loc, tY_loc) * sum_XY;
 		}
 		locsum += new_hw_loc * local_x_wts[itp] * sum_X;
-		//SC_sum += new_hw_loc * local_x_wts[itp] * sum_SC_X;
+		SC_sum += new_hw_loc * local_x_wts[itp] * sum_SC_X;
 	}
 
 	delete [] x_pts;
@@ -468,8 +637,8 @@ inline void colored_tau_integration(
 	delete [] local_x_pts;
 	delete [] local_x_wts;
 
-	//cout << "Sanity check: " << k << "   " << delta_n_delta_n_self_corr.real() << "   " << SC_sum.real() << "   " << locsum.real() << endl;
-	//if (1) exit(0);
+	cout << "Sanity check: " << k << "   " << delta_n_delta_n_self_corr.real() << "   " << SC_sum.real() << "   " << locsum.real() << endl;
+	if (1) exit(0);
 
 	(*results)[0] = locsum;
 	(*results)[1] = delta_n_delta_n_self_corr - locsum;

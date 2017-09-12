@@ -43,7 +43,13 @@ complex<double> integrate_1D_FT(double (*f)(double, void *), double * xpts, doub
 {
     complex<double> sum = (0,0);
 	for (int ix = 0; ix < nx; ix++)
+	{
 		sum += xwts[ix] * exp(- i * k * xpts[ix]) * (*f)(xpts[ix], p);
+		//cout << "FT: " << xpts[ix] << "   " << xwts[ix] << "   " << k << "   "
+		//		<< exp(- i * k * xpts[ix]).real() << "   " << exp(- i * k * xpts[ix]).imag() << "   "
+		//		<< (*f)(xpts[ix], p) << endl;
+	}
+	//if (1) exit(0);
 
     return (sum);
 }
