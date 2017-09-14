@@ -11,14 +11,10 @@
 #include <algorithm>
 #include <cmath>
 
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_multiroots.h>
-
 using namespace std;
 
 #include "gauss_quadrature.h"
 #include "lib.h"
-#include "asymptotics.h"
 
 /*USAGE:
 debugger(__LINE__, __FILE__);
@@ -38,7 +34,7 @@ string truestring = "true";
 string falsestring = "false";
 
 bool white_noise = true;
-bool white_Green = false;
+bool white_Green = true;
 
 inline string return_boolean_string(bool test){return (test ? truestring : falsestring);}
 
@@ -281,173 +277,6 @@ inline complex<double> Gtilde_n_color(double k, double tau, double taup)
 	return ( i * k * result ); //dimensionless
 }
 
-//define some functions for subtracting off singularities from product of colored Green's functions
-inline double g1(double x)
-{
-	double x2 = x*x;
-	return (
-				-x2/16.0 - x/2.0 - log(x)/8.0
-			); 
-}
-
-inline double g2(double x)
-{
-	double x2 = x*x;
-	double x3 = x2*x;
-	double x4 = x2*x2;
-	double lnx = log(x);
-	double lnx2 = lnx*lnx;
-	return (
-				x4/512.0 + x3/32.0 + x2/16.0 - x/4.0 + x2*lnx/128 + x*lnx/16.0 + lnx2/128.0
-			);
-}
-
-inline double B1(double x, double xp)
-{
-	return (
-				g1(xp) - g1(x) + (xp + 1.0) / 2.0
-			);
-}
-
-inline double B2(double x, double xp)
-{
-	double g1xp = g1(xp);
-	double Del_g1 = g1xp - g1(x);
-	double Del_g2 = g2(xp) - g2(x);
-
-	return (
-			0.5 * Del_g1 * (2.0 * g1xp + xp + 1.0) - Del_g2
-			);
-}
-
-
-inline complex<double> asymptotic_Gtilde_n_color(double k, double tau, double taup)
-{
-	double x = tau / tauQ;
-	double xp = taup / tauQ;
-	double prefactor = sqrt( taup / tau )
-						* exp( 0.5 * (xp - x) );
-	//double lambda = sqrt(k*k*vQ2 - 0.25);
-	double vQ = sqrt(vQ2);
-
-	double B1_x_xp = B1(x, xp);
-	double B2_x_xp = B2(x, xp);
-	double arg = k*vQ*log(x/xp);
-
-	double mainfactor = cos(arg) + (B1_x_xp / (k*vQ)) * sin(arg) - (B2_x_xp / (k*k*vQ2)) * cos(arg);
-
-	return ( i*k*prefactor*mainfactor );
-}
-
-inline complex<double> new_asymptotic_Gtilde_n_color(complex<double> k, double tau, double taup)
-{
-	double x = tau / tauQ;
-	double xp = taup / tauQ;
-	complex<double> one_fourth = 0.25;
-	complex<double> lambda = sqrt(one_fourth - vQ2*k*k);
-
-	complex<double> prefactor = 0.25*M_PI*sqrt( taup / tau )
-						* exp( 0.5 * (xp - x) )
-						* csc(M_PI * lambda);
-	double vQ = sqrt(vQ2);
-
-
-	complex<double> mainfactor = 4.0 * lambda * exp(0.5*(x+xp)) / (M_PI*sqrt(x*xp));
-
-	//if ( lambda.real() <= 1.e-10 )
-	//{
-		complex<double> I_lambda_x_by_2 = asymptotics::I(lambda, 0.5*x);
-		complex<double> I_prime_lambda_x_by_2 = asymptotics::Iprime(lambda, 0.5*x);
-		complex<double> I_mlambda_x_by_2 = asymptotics::I(-lambda, 0.5*x);
-		complex<double> I_prime_mlambda_x_by_2 = asymptotics::Iprime(-lambda, 0.5*x);
-
-		complex<double> I_lambda_xp_by_2 = asymptotics::I(lambda, 0.5*xp);
-		complex<double> I_mlambda_xp_by_2 = asymptotics::I(-lambda, 0.5*xp);
-
-		complex<double> term1 = ( (x + 1.0) * I_lambda_x_by_2 + x * I_prime_lambda_x_by_2 )
-								* I_mlambda_xp_by_2;
-		complex<double> term2 = ( (x + 1.0) * I_mlambda_x_by_2 + x * I_prime_mlambda_x_by_2 )
-								* I_lambda_xp_by_2;
-
-		/*cout << "new_asymp_G(): " << k << "   " << lambda << "   " << x << "   " << xp << endl << "\t\t"
-				<< I_lambda_x_by_2 << "   "
-				<< I_prime_lambda_x_by_2 << "   "
-				<< I_mlambda_x_by_2 << "   "
-				<< I_prime_mlambda_x_by_2 << endl << "\t\t"
-				<< I_lambda_xp_by_2 << "   "
-				<< I_mlambda_xp_by_2 << "   "
-				<< term1 << "   " << term2
-				<< endl;*/
-
-		mainfactor = term1 - term2;
-	//}
-
-	return ( i*k*prefactor*mainfactor );
-}
-
-inline complex<double> GG_self_correlations(double k, double tau1p, double tau2p)
-{
-	if (0)
-	{
-		complex<double> result = new_asymptotic_Gtilde_n_color(k, tauf, tau1p)
-						* new_asymptotic_Gtilde_n_color(-k, tauf, tau2p);
-
-		result = asymptotic_Gtilde_n_color(k, tauf, tau1p)
-						* asymptotic_Gtilde_n_color(-k, tauf, tau2p);
-
-		return (result);
-	}
-	else if (1)
-	{
-		double xf = tauf / tauQ;
-		double x1p = tau1p / tauQ;
-		double x2p = tau2p / tauQ;
-		double prefactor = sqrt( tau1p*tau2p / (tauf*tauf) )
-							* exp( 0.5 * (x1p + x2p) - xf )
-							/ (2.0*vQ2);
-		double vQ = sqrt(vQ2);
-		double arg = vQ * k * log(tau2p/tau1p);
-
-		double B1_xf_x1p = B1(xf, x1p);
-		double B1_xf_x2p = B1(xf, x2p);
-		double B2_xf_x1p = B2(xf, x1p);
-		double B2_xf_x2p = B2(xf, x2p);
-
-		double C1 = vQ2 * k * k + B1_xf_x1p * B1_xf_x2p - B2_xf_x1p - B2_xf_x2p;
-		double C2 = vQ * k * (B1_xf_x1p - B1_xf_x2p);
-
-		double final_result = prefactor * ( C1 * cos(arg) + C2 * sin(arg) );
-		return (final_result);
-	}
-	else
-	{
-		double xf = tauf / tauQ;
-		double x1p = tau1p / tauQ;
-		double x2p = tau2p / tauQ;
-		double prefactor = sqrt( tau1p*tau2p / (tauf*tauf) )
-							* exp( 0.5 * (x1p + x2p) - xf )
-							/ (2.0*vQ2);
-		double vQ = sqrt(vQ2);
-
-		double B1_xf_x1p = B1(xf, x1p);
-		double B1_xf_x2p = B1(xf, x2p);
-		double B2_xf_x1p = B2(xf, x1p);
-		double B2_xf_x2p = B2(xf, x2p);
-
-		double arg1 = vQ * k * log(tau1p/tau2p);
-		double arg2 = vQ * k * log(tau1p*tau2p/(tauf*tauf));
-		double c1 = cos(arg1);
-		double c2 = cos(arg2);
-		double s1 = sin(arg1);
-		double s2 = sin(arg2);
-
-		double result = vQ2*k*k*(c1+c2)
-						- vQ*k*( (s1+s2)*B1_xf_x1p + (-s1+s2)*B1_xf_x2p )
-						+ (c1-c2)*B1_xf_x1p*B1_xf_x2p - (c1+c2)*(B2_xf_x1p + B2_xf_x2p);
-
-		return ( prefactor * result );
-	}
-}
 
 inline void tau_integration_WhiteGreen(
 					complex<double> (*Gtilde_X)(double, double, double),
@@ -487,6 +316,7 @@ inline void tau_integration_WhiteGreen(
 
 	(*results)[0] = result;
 	(*results)[1] = self_correlation - result;
+	(*results)[2] = self_correlation;
 
 	return;
 }
@@ -508,26 +338,20 @@ inline void tau_integration_coloredGreen(
 	for (int it = 0; it < n_tau_pts; ++it)
 	{
 		double tau_loc = cen_loc + hw_loc * local_x_pts[it];
-		//double T_loc = T_pts[it];
 		double T_loc = guess_T(tau_loc);
 		double chi_Q = chi_mumu(T_loc);
 
 		complex<double> tmp_result = hw_loc * local_x_wts[it] * ( 2.0 * DQ * chi_Q * T_loc / tau_loc ) *
 										(*Gtilde_X)(k, tauf, tau_loc) * (*Gtilde_Y)(-k, tauf, tau_loc);
 		result += tmp_result;
-		SC_result += hw_loc * local_x_wts[it] * ( 2.0 * DQ * chi_Q * T_loc / tau_loc ) *
-										GG_self_correlations(k, tau_loc, tau_loc);
 	}
 
 	delete [] local_x_pts;
 	delete [] local_x_wts;
 
-	//cout << "Sanity check: " << k << "   " << self_correlation << "   " << SC_result.real() << "   " << result.real() << endl;
-	//if (1) exit(0);
-
 	(*results)[0] = result;
-	//(*results)[1] = self_correlation - result;
-	(*results)[1] = SC_result - result;
+	(*results)[1] = self_correlation - result;
+	(*results)[2] = self_correlation;
 
 	return;
 }
@@ -550,12 +374,12 @@ inline void set_running_transport_integral(double * run_int_array)
 		{
 			double t_loc = cen + hw * x_pts[ix];
 			sum += x_wts[ix] * hw * exp(t_loc / tauQ) * mediumN(t_loc);
-//cout << "Medium check: " << t_loc << "   " << mediumN(t_loc) << endl;
+			//cout << "Medium check: " << t_loc << "   " << mediumN(t_loc) << endl;
 		}
 		run_int_array[it+1] = exp(-t1 / tauQ) * ( tauQ * exp(t0 / tauQ) * run_int_array[it] + sum ) / tauQ;	//this array contains eta(x)
 		//cout << t0 << "   " << run_int_array[it] << endl;
 	}
-//if (1) exit(0);
+	//if (1) exit(0);
 	delete [] x_pts;
 	delete [] x_wts;
 
@@ -626,10 +450,8 @@ inline void colored_tau_integration(
 
 			double sum_XY = exp(-abs(tX_loc - tY_loc) / tauQ) * eta_at_min_tp_tpp / (2.0*tauQ);
 			sum_X += hw_loc * x_wts[ix] * factor_X * factor_Y * sum_XY;
-			sum_SC_X += hw_loc * x_wts[ix] * sX_loc * sY_loc * GG_self_correlations(k, tX_loc, tY_loc) * sum_XY;
 		}
 		locsum += new_hw_loc * local_x_wts[itp] * sum_X;
-		SC_sum += new_hw_loc * local_x_wts[itp] * sum_SC_X;
 	}
 
 	delete [] x_pts;
@@ -637,12 +459,9 @@ inline void colored_tau_integration(
 	delete [] local_x_pts;
 	delete [] local_x_wts;
 
-	cout << "Sanity check: " << k << "   " << delta_n_delta_n_self_corr.real() << "   " << SC_sum.real() << "   " << locsum.real() << endl;
-	if (1) exit(0);
-
 	(*results)[0] = locsum;
 	(*results)[1] = delta_n_delta_n_self_corr - locsum;
-	//(*results)[1] = SC_sum - locsum;
+	(*results)[2] = delta_n_delta_n_self_corr;
 
 	return;
 }
@@ -663,175 +482,9 @@ inline void Ctilde_n_n(double k, vector<complex<double> > * results)	//allows to
 
 	(*results)[0] /= tauf*tauf;	//fm^2; note that we must include extra factor of tauf^-2 for consistency with manuscript
 	(*results)[1] /= tauf*tauf;	//fm^2; note that we must include extra factor of tauf^-2 for consistency with manuscript
+	(*results)[2] /= tauf*tauf;	//do the same for self-correlations...
 
 	return;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Functions/stuff to solve for time-dependence of T and/or Tf
-////////////////////////////////////////////////////////////////////////////////
-
-struct rparams
-{
-	double tau;
-};
-
-//compute final time-step Tf and muf
-
-int input_get_Tf_f (const gsl_vector * x, void * params, gsl_vector * f)
-{
-	const double x0 = gsl_vector_get (x, 0);	//T
-
-	const double y0 = P(x0);						//defines P==0 curve
-
-	gsl_vector_set (f, 0, y0);
-
-	return GSL_SUCCESS;
-}
-
-void compute_Tf()
-{
-	const gsl_multiroot_fsolver_type *gsl_T;
-	gsl_multiroot_fsolver *gsl_s;
-
-	int status;
-	size_t iter = 0;
-
-	const size_t n = 1;
-	struct rparams p = {taui};
-	gsl_multiroot_function f = {&input_get_Tf_f, n, &p};
-
-	double x_init[n] = {Ti};
-	gsl_vector *x = gsl_vector_alloc (n);
-
-	gsl_vector_set (x, 0, x_init[0]);
-
-	gsl_T = gsl_multiroot_fsolver_hybrids;
-	gsl_s = gsl_multiroot_fsolver_alloc (gsl_T, n);
-	gsl_multiroot_fsolver_set (gsl_s, &f, x);
-
-	do
-	{
-		iter++;
-
-		status = gsl_multiroot_fsolver_iterate (gsl_s);
-
-		if (status)   /* check if solver is stuck */
-			break;
-
-		status = gsl_multiroot_test_residual (gsl_s->f, 1e-7);
-	}
-	while (status == GSL_CONTINUE && iter < 1000);
-
-	//finally, store results
-	Tf = gsl_vector_get (gsl_s->x, 0);
-
-	gsl_multiroot_fsolver_free (gsl_s);
-	gsl_vector_free (x);
-
-	return;
-}
-
-//compute T at each time step
-
-int input_f (const gsl_vector * x, void * params, gsl_vector * f)
-{
-	double tau_local = ((struct rparams *) params)->tau;
-
-	const double x0 = gsl_vector_get (x, 0);	//T
-
-	const double y0 = s_vs_T(x0) - s_vs_tau(tau_local);
-
-	gsl_vector_set (f, 0, y0);
-
-	return GSL_SUCCESS;
-}
-
-void populate_T_vs_tau()
-{
-	for (int it = 0; it < n_tau_pts; ++it)
-	{
-		const gsl_multiroot_fsolver_type *gsl_T;
-		gsl_multiroot_fsolver *gsl_s;
-
-		int status;
-		size_t iter = 0;
-
-		const size_t n = 1;
-		struct rparams p = {tau_pts[it]};
-		gsl_multiroot_function f = {&input_f, n, &p};
-
-		double x_init[n] = {guess_T(tau_pts[it])};
-		gsl_vector *x = gsl_vector_alloc (n);
-
-		gsl_vector_set (x, 0, x_init[0]);
-
-		gsl_T = gsl_multiroot_fsolver_hybrids;
-		gsl_s = gsl_multiroot_fsolver_alloc (gsl_T, n);
-		gsl_multiroot_fsolver_set (gsl_s, &f, x);
-
-		do
-		{
-			iter++;
-			status = gsl_multiroot_fsolver_iterate (gsl_s);
-
-			if (status)   /* check if solver is stuck */
-				break;
-
-			status = gsl_multiroot_test_residual (gsl_s->f, 1e-7);
-		}
-		while (status == GSL_CONTINUE && iter < 1000);
-
-		//finally, store results
-		T_pts[it] = gsl_vector_get (gsl_s->x, 0);
-
-		gsl_multiroot_fsolver_free (gsl_s);
-		gsl_vector_free (x);
-	}
-	
-	return;
-}
-
-double compute_newTf(double new_tauf)
-{
-	const gsl_multiroot_fsolver_type *gsl_T;
-	gsl_multiroot_fsolver *gsl_s;
-
-	int status;
-	size_t iter = 0;
-
-	const size_t n = 1;
-	struct rparams p = {new_tauf};
-	gsl_multiroot_function f = {&input_f, n, &p};
-
-	double x_init[n] = {guess_T(new_tauf)};
-	gsl_vector *x = gsl_vector_alloc (n);
-
-	gsl_vector_set (x, 0, x_init[0]);
-
-	gsl_T = gsl_multiroot_fsolver_hybrids;
-	gsl_s = gsl_multiroot_fsolver_alloc (gsl_T, n);
-	gsl_multiroot_fsolver_set (gsl_s, &f, x);
-
-	do
-	{
-		iter++;
-		status = gsl_multiroot_fsolver_iterate (gsl_s);
-
-		if (status)   /* check if solver is stuck */
-			break;
-
-		status = gsl_multiroot_test_residual (gsl_s->f, 1e-7);
-	}
-	while (status == GSL_CONTINUE && iter < 1000);
-
-	//finally, store result
-	double result = gsl_vector_get (gsl_s->x, 0);
-
-	gsl_multiroot_fsolver_free (gsl_s);
-	gsl_vector_free (x);
-	
-	return (result);
 }
 
 // End of file

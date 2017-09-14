@@ -423,7 +423,7 @@ complex<double> Hypergeometric1F1(complex<double> a_in, complex<double> b_in, co
 	return (sum);
 }
 
-
+/*
 complex<double> SFL_Hypergeometric1F1(complex<double> a_in, complex<double> b_in, complex<double> z_in)
 {
 	struct SFL::complex a, b, z, ans;
@@ -444,5 +444,6 @@ complex<double> SFL_Hypergeometric1F1(complex<double> a_in, complex<double> b_in
 
 	return (ans_out);
 }
+*/
 
 //End of file

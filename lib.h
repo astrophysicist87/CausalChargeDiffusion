@@ -56,6 +56,6 @@ long binarySearch(double * A, int length, double value,
 //complex<double> Hypergeometric0F1(complex<double> a, complex<double> z);
 complex<double> Hypergeometric1F1(complex<double> a, complex<double> b, complex<double> z);
 //complex<double> SFL_Hypergeometric0F1(complex<double> a, complex<double> z);
-complex<double> SFL_Hypergeometric1F1(complex<double> a, complex<double> b, complex<double> z);
+//complex<double> SFL_Hypergeometric1F1(complex<double> a, complex<double> b, complex<double> z);
 
 #endif

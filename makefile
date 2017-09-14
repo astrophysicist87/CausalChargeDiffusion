@@ -1,29 +1,29 @@
 SHELL=/bin/sh
 
-SFLDIR=./special_function_library/cmlib
+#SFLDIR=./special_function_library/cmlib
 
 SRCS= \
 CausalChargeDiffusion.cpp \
 gauss_quadrature.cpp \
-lib.cpp \
-$(SFLDIR)/chf.cpp \
-$(SFLDIR)/chfs.cpp \
-$(SFLDIR)/complex.cpp \
-$(SFLDIR)/g.cpp \
-$(SFLDIR)/f211.cpp \
-$(SFLDIR)/f212.cpp \
-$(SFLDIR)/f213.cpp \
-$(SFLDIR)/polyrt.cpp \
-$(SFLDIR)/digam.cpp \
-$(SFLDIR)/ebznew.cpp
+lib.cpp
+#$(SFLDIR)/chf.cpp \
+#$(SFLDIR)/chfs.cpp \
+#$(SFLDIR)/complex.cpp \
+#$(SFLDIR)/g.cpp \
+#$(SFLDIR)/f211.cpp \
+#$(SFLDIR)/f212.cpp \
+#$(SFLDIR)/f213.cpp \
+#$(SFLDIR)/polyrt.cpp \
+#$(SFLDIR)/digam.cpp \
+#$(SFLDIR)/ebznew.cpp
 
 HDRS= \
 gauss_quadrature.h \
 defs.h \
-lib.h \
-$(SFLDIR)/cmlib.h \
-$(SFLDIR)/complex.h \
-$(SFLDIR)/protom.h
+lib.h
+#$(SFLDIR)/cmlib.h \
+#$(SFLDIR)/complex.h \
+#$(SFLDIR)/protom.h
 
 MAKEFILE=makefile
 

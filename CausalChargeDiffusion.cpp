@@ -8,13 +8,9 @@
 #include <complex>
 #include <algorithm>
 
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_multiroots.h>
-
 using namespace std;
 
 #include "defs.h"
-#include "asymptotics.h"
 
 //const int particle_to_study
 	// 1 - pion
@@ -24,15 +20,12 @@ int particle_to_study;
 
 const double hbarC = 197.33;
 const double xi_infinity = 5.0;
-const double k_infinity = 50.0;
-//const double k_critical = 0.5 / sqrt(vQ2);
-const int n_Dy = 501;
+const double k_infinity = 20.0;
 
-//const double tauC = 0.5;	//fm/c
+const int n_Dy = 51;
+double Delta_y_step = 0.1;
+
 const double DQ = 0.162035;	//fm (rough estimate!)
-//const double vQ2 = DQ/tauQ;	//N.B. - must have tauQ > DQ for sub-luminal speed!
-//const double vQ2 = 10.0;
-//const double tauQ = DQ/vQ2;
 double vQ2, tauQ;
 
 long n_interp;
@@ -47,16 +40,13 @@ double A0, A2, A4, C0, B, mui, muf, xi0, xibar0, etaBYs, RD, sPERn, Nf, qD, si, 
 double a_at_tauf, vs2_at_tauf, vn2_at_tauf, vsigma2_at_tauf;
 
 const int n_xi_pts = 5000;
-const int n_k_pts = 500;	//# of k points should be even to avoid poles in 1F1, etc.!!!
-const int n_tau_pts = 51;
+const int n_k_pts = 100;	//# of k points should be even to avoid poles in 1F1, etc.!!!
+const int n_tau_pts = 201;
 double * xi_pts_minf_inf, * xi_wts_minf_inf;
 double * k_pts, * k_wts;
 double * tau_pts, * tau_wts;
 double * T_pts;
 double * running_integral_array;
-
-//const int n_integ_besselK_points = 101;
-//vector<double> x_integ_besselK_pts(n_integ_besselK_points), x_integ_besselK_wts(n_integ_besselK_points);
 
 ///////////////////////////////////////////////////////////////
 int main(int argc, char *argv[])
@@ -66,7 +56,7 @@ int main(int argc, char *argv[])
 	particle1.index = atoi(argv[1]);
 	particle2.index = atoi(argv[2]);
 	//Ti = atoi(argv[2]) / hbarC;		//initial trajectory temperature
-	Ti = 250.0 / hbarC;
+	Ti = 350.0 / hbarC;
 	fraction_of_evolution = 1.0;
 
 	//set speed of sound and correlation timescale
@@ -74,9 +64,6 @@ int main(int argc, char *argv[])
 	tauQ = DQ/vQ2;
 
 	set_phase_diagram_and_EOS_parameters();
-
-	//other constants
-	double Delta_y_step = 0.01;
 
 	switch (particle1.index)
 	{
@@ -115,7 +102,9 @@ int main(int argc, char *argv[])
 
 	si = s_vs_T(Ti);
 
-	compute_Tf();
+	//fixing Tf explicitly instead of
+	//calculating it from P=0 curve
+	Tf = 150.0 / hbarC;
 
 	sf = s_vs_T(Tf);
 	tauf = si * taui / sf;
@@ -123,7 +112,8 @@ int main(int argc, char *argv[])
 	// added this to allow "snapshots" throughout evolution
 	tauf = taui + fraction_of_evolution * (tauf - taui);
 	sf = s_vs_tau(tauf);
-	Tf = compute_newTf(tauf);
+	//Tf = compute_newTf(tauf);
+	Tf = guess_T(tauf);
 	// rest of code runs the same as before
 
     // initialize other parameters
@@ -139,14 +129,14 @@ int main(int argc, char *argv[])
 	chi_tilde_T_T = chi_T_T / Delta;
 
 	//output some parameters from calculation
-	/*cout 	<< "#########################################################" << endl
+	cout 	<< "#########################################################" << endl
 			<< "# Using following parameters:" << endl
 			<< "# taui = " << taui << " fm/c, tauf = " << tauf << " fm/c" << endl
 			<< "# si = " << si << ", sf = " << sf << endl
 			<< "# Ti = " << Ti*hbarC << " MeV, Tf = " << Tf*hbarC << " MeV" << endl
 			<< "# v_Q^2 = " << vQ2 << ", D_Q = " << DQ << " fm/c, tau_Q = " << tauQ << " fm/c" << endl
 			<< "# chi_{T,T} = " << chi_T_T << ", chi_{T,mu} = chi_{mu,T} = " << chi_T_mu << ", chi_{mu,mu} = " << chi_mu_mu << endl
-			<< "#########################################################" << endl;*/
+			<< "#########################################################" << endl;
 
     // set up grid points for integrations
     xi_pts_minf_inf = new double [n_xi_pts];
@@ -163,8 +153,9 @@ int main(int argc, char *argv[])
 
 	T_pts = new double [n_tau_pts];
 
-	//computes tau-dependence of T and mu for remainder of calculation
-	populate_T_vs_tau();
+	//computes tau-dependence of T for remainder of calculation
+	for (int it = 0; it < n_tau_pts; ++it)
+		T_pts[it] = guess_T(tau_pts[it]);
 
 	//////////////////////////////////////////////////////////
 	//Check hypergeometric function implementations
@@ -184,42 +175,6 @@ int main(int argc, char *argv[])
 	}
 	if (1) return (0);
 	*/
-
-	/*complex<double> nuBIG = 10.0*i;
-	complex<double> nuSMALL = 0.05*i;
-	long double z = 30.0;
-	complex<double> result1 = asymptotics::I(nuBIG, z);
-	cout << setprecision(20) << z << "   " << result1.real() << "   " << result1.imag() << endl;
-	complex<double> result2 = asymptotics::Iprime(nuBIG, z);
-	cout << setprecision(20) << z << "   " << result2.real() << "   " << result2.imag() << endl;
-	cout << setprecision(20) << asymptotics::zeta_prime(0.5) << "   "
-			<< asymptotics::zeta_prime(2.0) << endl;
-	cout << asymptotics::B_0_prime(0.5, asymptotics::zeta(0.5), asymptotics::zeta_prime(0.5)) << "   "
-			<< asymptotics::B_0_prime(2.0, asymptotics::zeta(2.0), asymptotics::zeta_prime(2.0)) << endl;
-	for (int iz = 0; iz <= 1000; ++iz)
-	{
-		long double z = 1.0 + 0.06 * iz;
-		complex<double> result1 = asymptotics::I(nuBIG, z);
-		complex<double> result2 = asymptotics::I(nuSMALL, z);
-		cout << z << "   " << result1.real() << "   " << result1.imag()
-				<< "   " << result2.real() << "   " << result2.imag() << endl;
-	}
-	if (1) return (0);*/
-
-	const double k_critical = 0.5 / sqrt(vQ2);
-	/*cerr << "k_c: " << vQ2 << "   " << k_critical << endl;*/
-	/*for (int ik = 0; ik < n_k_pts; ++ik)
-	{
-		double k = k_pts[ik];
-		if (k*k < k_critical*k_critical)
-			continue;
-		double tau1 = 0.5*tauf;
-		cout << k << "   " << Gtilde_n_white(k, tauf, tau1).imag() << "   " << Gtilde_n_color(k, tauf, tau1).imag()
-				<< "   " << new_asymptotic_Gtilde_n_color(k, tauf, tau1).imag() << endl;
-	//if (ik >= 2) return (0);
-	}
-	if (1) return (0);*/
-	
 	//////////////////////////////////////////////////////////
 
 	//get the ensemble averaged spectra
@@ -227,7 +182,7 @@ int main(int argc, char *argv[])
 
 	//vectorize calculations to make them run a little faster
 	vector<complex<double> > Ftn_particle1_vec, Ftn_particle2_vec;
-	vector<complex<double> > Ctnn_vec, Ctnn_no_SC_vec;
+	vector<complex<double> > Ctnn_vec, Ctnn_no_SC_vec, SC_vec;
 
 	for (int ik = 0; ik < n_k_pts; ++ik)
 	{
@@ -241,14 +196,25 @@ int main(int argc, char *argv[])
 	running_integral_array = new double [n_tau_pts];
 	set_running_transport_integral(running_integral_array);
 
+	ofstream output_dndn_k, output_dndn_Dxi;	//files for Fourier output, coordinate-space output
+	string dndn_k_filename = "dndn_k.dat";
+	string dndn_Dxi_filename = "dndn_Dxi.dat";
+	if (print_dndn_k)
+		output_dndn_.open ( dndn_k_filename.c_str ( ) );
+	if (print_dndn_Dxi)
+		output_dndn_Dxi.open ( dndn_Dxi_filename.c_str ( ) );
+
 	for (int ik = 0; ik < n_k_pts; ++ik)
 	{
 		double k = k_pts[ik];
 		current_ik = ik;
-		vector<complex<double> > results(2);
+		vector<complex<double> > results(3);
 		Ctilde_n_n(k, &results);
 		Ctnn_vec.push_back(results[0]);
 		Ctnn_no_SC_vec.push_back(results[1]);
+		SC_vec.push_back(results[2]);
+		if (print_dndn_k)
+			output_dndn_k << k << "   " << setprecision(15) << results[0] << "   " << results[1] << "   " << results[2] << endl;
 	}
 
 	//start computing actual charge balance functions here
@@ -257,6 +223,8 @@ int main(int argc, char *argv[])
 		double Delta_y = (double)iDy * Delta_y_step;
 
 		complex<double> sum(0,0), sum_no_SC(0,0);
+		complex<double> sum_Dxi(0,0), sum_Dxi_no_SC(0,0), SC_Dxi(0,0);
+
 		for (int ik = 0; ik < n_k_pts; ++ik)
 		{
 			double k = k_pts[ik];
@@ -265,22 +233,42 @@ int main(int argc, char *argv[])
 			complex<double> Ftn2 = Ftn_particle2_vec[ik];
 			complex<double> Ctnn = Ctnn_vec[ik];
 			complex<double> Ctnn_no_SC = Ctnn_no_SC_vec[ik];
+			complex<double> SC_loc = SC_vec[ik];
 
 			sum += k_wts[ik] * exp(i * k * Delta_y)
 					* ( Ftn1 * conj(Ftn2) * Ctnn );
 			sum_no_SC += k_wts[ik] * exp(i * k * Delta_y)
 					* ( Ftn1 * conj(Ftn2) * Ctnn_no_SC );
+
+			sum_Dxi += k_wts[ik] * exp(i * k * Delta_y) * Ctnn;
+			sum_Dxi_no_SC += k_wts[ik] * exp(i * k * Delta_y) * Ctnn_no_SC;
+			SC_Dxi += k_wts[ik] * exp(i * k * Delta_y) * SC_loc;
+
 			//cerr << k << "   " << Ctnn.real() << "   " << Ctnn_no_SC.real() 
 			//		<< "   " << (Ftn1 * conj(Ftn2)).real()
 			//		<< "   " << (Ftn1 * conj(Ftn2) * Ctnn).real()
 			//		<< "   " << (Ftn1 * conj(Ftn2) * Ctnn_no_SC).real() << endl;
 		}
+
+		double Delta_xi = Delta_y;
+		//omit smearing function factors to just F.T. back to xi-space
+		if (print_dndn_Dxi)
+			output_dndn_Dxi << Delta_xi << "   " << setprecision(15) << sum_Dxi << "   " << sum_Dxi_no_SC << "   " << SC_Dxi << endl;
+
 		//if (1) return (0);
 
 		complex<double> result = (ds*tauf*Tf / (4.0*M_PI*M_PI * norm)) * sum;
 		complex<double> result_no_SC = (ds*tauf*Tf / (4.0*M_PI*M_PI * norm)) * sum_no_SC;
-		cout << setprecision(15) << Delta_y << "   " << result.real() << "   " << result.imag() << "   " << result_no_SC.real() << "   " << result_no_SC.imag() << endl;
+
+		cout << setprecision(15) << Delta_y << "   "
+				<< result.real() << "   " << result.imag() << "   "
+				<< result_no_SC.real() << "   " << result_no_SC.imag() << endl;
 	}
+
+	if (print_dndn_k)
+		output_dndn_k.close();
+	if (print_dndn_Dxi)
+		output_dndn_Dxi.close();
 
 	return 0;
 }
