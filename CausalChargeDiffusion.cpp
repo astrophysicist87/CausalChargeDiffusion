@@ -270,10 +270,10 @@ int main(int argc, char *argv[])
 					* ( Ftn1 * conj(Ftn2) * Ctnn );
 			sum_no_SC += k_wts[ik] * exp(i * k * Delta_y)
 					* ( Ftn1 * conj(Ftn2) * Ctnn_no_SC );
-			cerr << k << "   " << Ctnn.real() << "   " << Ctnn_no_SC.real() 
-					<< "   " << (Ftn1 * conj(Ftn2)).real()
-					<< "   " << (Ftn1 * conj(Ftn2) * Ctnn).real()
-					<< "   " << (Ftn1 * conj(Ftn2) * Ctnn_no_SC).real() << endl;
+			//cerr << k << "   " << Ctnn.real() << "   " << Ctnn_no_SC.real() 
+			//		<< "   " << (Ftn1 * conj(Ftn2)).real()
+			//		<< "   " << (Ftn1 * conj(Ftn2) * Ctnn).real()
+			//		<< "   " << (Ftn1 * conj(Ftn2) * Ctnn_no_SC).real() << endl;
 		}
 		//if (1) return (0);
 
