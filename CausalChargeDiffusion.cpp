@@ -46,7 +46,7 @@ double A0, A2, A4, C0, B, mui, muf, xi0, xibar0, etaBYs, RD, sPERn, Nf, qD, si, 
 double a_at_tauf, vs2_at_tauf, vn2_at_tauf, vsigma2_at_tauf;
 
 const int n_xi_pts = 5000;
-const int n_k_pts = 5000;	//# of k points should be even to avoid poles in 1F1, etc.!!!
+const int n_k_pts = 100;	//# of k points should be even to avoid poles in 1F1, etc.!!!
 const int n_tau_pts = 201;
 double * xi_pts_minf_inf, * xi_wts_minf_inf;
 double * k_pts, * k_wts;
@@ -61,9 +61,7 @@ int main(int argc, char *argv[])
 	// set particles to study...
 	particle1.index = atoi(argv[1]);
 	particle2.index = atoi(argv[2]);
-	//Ti = atoi(argv[2]) / hbarC;		//initial trajectory temperature
 	Ti = 350.0 / hbarC;
-	fraction_of_evolution = 1.0;
 
 	//set speed of sound and correlation timescale
 	vQ2 = atof(argv[3]);
@@ -74,15 +72,7 @@ int main(int argc, char *argv[])
 	white_noise = (vQ2 > 20.0);
 	white_Green = (vQ2 > 20.0);
 
-	/*const int n_x_pts = 101;
-	double * x_pts = new double [n_x_pts];
-	double * x_wts = new double [n_x_pts];
-	gauss_quadrature(n_x_pts, 6, 0.0, 0.0, 0.0, 1.0, x_pts, x_wts);
-	double test_sum = 0.0;
-	for (int ix = 0; ix < n_x_pts; ++ix)
-		test_sum += x_wts[ix] * exp(-x_pts[ix]*x_pts[ix]);	//should integrate a Gaussian???
-	cout << "integral = " << test_sum << endl;
-	if (1) exit (0);*/
+	fraction_of_evolution = (argc > 4) ? atof(argv[4]) : 1.0;
 
 	set_phase_diagram_and_EOS_parameters();
 
@@ -182,7 +172,7 @@ int main(int argc, char *argv[])
 
     int tmp = gauss_quadrature(n_xi_pts, 1, 0.0, 0.0, -xi_infinity, xi_infinity, xi_pts_minf_inf, xi_wts_minf_inf);
     //tmp = gauss_quadrature(n_k_pts, 1, 0.0, 0.0, -k_infinity, k_infinity, k_pts, k_wts);
-	double inverse_smearing_width = 2.0;
+	double inverse_smearing_width = 1.0;
     tmp = gauss_quadrature(n_k_pts, 6, 0.0, 0.0, 0.0, inverse_smearing_width, k_pts, k_wts);
     tmp = gauss_quadrature(n_tau_pts, 1, 0.0, 0.0, taui, tauf, tau_pts, tau_wts);
     //tmp = gauss_quadrature(n_integ_besselK_points, 1, 0.0, 0.0, -1.0, 1.0, x_integ_besselK_pts, x_integ_besselK_wts);
@@ -281,14 +271,9 @@ int main(int argc, char *argv[])
 			sum_no_SC += k_wts[ik] * exp(i * k * Delta_y)
 					* ( Ftn1 * conj(Ftn2) * Ctnn_no_SC );
 
-			sum_Dxi += k_wts[ik] * exp(-0.01*inverse_smearing_width*inverse_smearing_width*k*k) * exp(i * k * Delta_xi) * Ctnn;
-			sum_Dxi_no_SC += k_wts[ik] * exp(-0.01*inverse_smearing_width*inverse_smearing_width*k*k) * exp(i * k * Delta_xi) * Ctnn_no_SC;
-			SC_Dxi += k_wts[ik] * exp(-0.01*inverse_smearing_width*inverse_smearing_width*k*k) * exp(i * k * Delta_xi) * SC_loc;
-
-			//cerr << k << "   " << Ctnn.real() << "   " << Ctnn_no_SC.real() 
-			//		<< "   " << (Ftn1 * conj(Ftn2)).real()
-			//		<< "   " << (Ftn1 * conj(Ftn2) * Ctnn).real()
-			//		<< "   " << (Ftn1 * conj(Ftn2) * Ctnn_no_SC).real() << endl;
+			sum_Dxi += k_wts[ik] * exp(-0.0*inverse_smearing_width*inverse_smearing_width*k*k) * exp(i * k * Delta_xi) * Ctnn;
+			sum_Dxi_no_SC += k_wts[ik] * exp(-0.0*inverse_smearing_width*inverse_smearing_width*k*k) * exp(i * k * Delta_xi) * Ctnn_no_SC;
+			SC_Dxi += k_wts[ik] * exp(-0.0*inverse_smearing_width*inverse_smearing_width*k*k) * exp(i * k * Delta_xi) * SC_loc;
 		}
 
 		//omit smearing function factors to just F.T. back to xi-space

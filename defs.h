@@ -33,8 +33,6 @@ inline int sgn(T val) {
 string truestring = "true";
 string falsestring = "false";
 
-//bool white_noise = true;
-//bool white_Green = true;
 extern bool white_noise;
 extern bool white_Green;
 
@@ -537,7 +535,7 @@ void set_outfilenames(
 	string GreenStem = white_Green ? "white" : "color";
 
 	string vQ2string = ( white_noise and white_Green ) ? "" : "_vQ2_" + get_vQ2_string();
-	string snapshotstring = "_snapshot_" + get_vQ2_string();
+	string snapshotstring = "_snapshot_" + get_snapshot_string();
 
 	mainResultsFilename = "twoPC_" + particle1.name + particle2.name + "_"
 							+ noiseStem + "_noise_" + GreenStem + "_Green" + vQ2string + snapshotstring + ".dat";
