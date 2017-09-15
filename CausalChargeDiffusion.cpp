@@ -18,12 +18,18 @@ using namespace std;
 	// 3 - kaon
 int particle_to_study;
 
+bool print_dndn_k = true;
+bool print_dndn_Dxi = true;
+//white noise is default
+bool white_noise = true;
+bool white_Green = true;
+
 const double hbarC = 197.33;
 const double xi_infinity = 5.0;
 const double k_infinity = 20.0;
 
-const int n_Dy = 51;
-double Delta_y_step = 0.1;
+const int n_Dy = 501;
+double Delta_y_step = 0.01;
 
 const double DQ = 0.162035;	//fm (rough estimate!)
 double vQ2, tauQ;
@@ -40,7 +46,7 @@ double A0, A2, A4, C0, B, mui, muf, xi0, xibar0, etaBYs, RD, sPERn, Nf, qD, si, 
 double a_at_tauf, vs2_at_tauf, vn2_at_tauf, vsigma2_at_tauf;
 
 const int n_xi_pts = 5000;
-const int n_k_pts = 100;	//# of k points should be even to avoid poles in 1F1, etc.!!!
+const int n_k_pts = 5000;	//# of k points should be even to avoid poles in 1F1, etc.!!!
 const int n_tau_pts = 201;
 double * xi_pts_minf_inf, * xi_wts_minf_inf;
 double * k_pts, * k_wts;
@@ -63,18 +69,36 @@ int main(int argc, char *argv[])
 	vQ2 = atof(argv[3]);
 	tauQ = DQ/vQ2;
 
+	//update white noise and white Green's functions boolean variables
+	//assume both are the same for now...
+	white_noise = (vQ2 > 20.0);
+	white_Green = (vQ2 > 20.0);
+
+	/*const int n_x_pts = 101;
+	double * x_pts = new double [n_x_pts];
+	double * x_wts = new double [n_x_pts];
+	gauss_quadrature(n_x_pts, 6, 0.0, 0.0, 0.0, 1.0, x_pts, x_wts);
+	double test_sum = 0.0;
+	for (int ix = 0; ix < n_x_pts; ++ix)
+		test_sum += x_wts[ix] * exp(-x_pts[ix]*x_pts[ix]);	//should integrate a Gaussian???
+	cout << "integral = " << test_sum << endl;
+	if (1) exit (0);*/
+
 	set_phase_diagram_and_EOS_parameters();
 
 	switch (particle1.index)
 	{
 		case 1:	//pion
 			particle1.mass = 139.57 / hbarC;
+			particle1.name = "pi";
 			break;
 		case 2:	//proton
 			particle1.mass = 939.0 / hbarC;
+			particle1.name = "p";
 			break;
 		case 3:	//kaon
 			particle1.mass = 493.68 / hbarC;
+			particle1.name = "K";
 			break;
 		default:
 			cerr << "Not a supported particle!" << endl;
@@ -85,12 +109,15 @@ int main(int argc, char *argv[])
 	{
 		case 1:	//pion
 			particle2.mass = 139.57 / hbarC;
+			particle2.name = "pi";
 			break;
 		case 2:	//proton
 			particle2.mass = 939.0 / hbarC;
+			particle2.name = "p";
 			break;
 		case 3:	//kaon
 			particle2.mass = 493.68 / hbarC;
+			particle2.name = "K";
 			break;
 		default:
 			cerr << "Not a supported particle!" << endl;
@@ -119,6 +146,9 @@ int main(int argc, char *argv[])
     // initialize other parameters
     ds = 2.0;
 
+	string filename1, filename2, filename3;
+	set_outfilenames(filename1, filename2, filename3);
+
 	//set the susceptibilities
 	chi_mu_mu = chi_mumu(Tf);
 	chi_T_mu = chi_Tmu(Tf);
@@ -129,7 +159,11 @@ int main(int argc, char *argv[])
 	chi_tilde_T_T = chi_T_T / Delta;
 
 	//output some parameters from calculation
-	cout 	<< "#########################################################" << endl
+	ofstream output_results;
+	output_results.open(filename1.c_str());
+
+	output_results 
+			<< "#########################################################" << endl
 			<< "# Using following parameters:" << endl
 			<< "# taui = " << taui << " fm/c, tauf = " << tauf << " fm/c" << endl
 			<< "# si = " << si << ", sf = " << sf << endl
@@ -147,7 +181,9 @@ int main(int argc, char *argv[])
     k_wts = new double [n_k_pts];
 
     int tmp = gauss_quadrature(n_xi_pts, 1, 0.0, 0.0, -xi_infinity, xi_infinity, xi_pts_minf_inf, xi_wts_minf_inf);
-    tmp = gauss_quadrature(n_k_pts, 1, 0.0, 0.0, -k_infinity, k_infinity, k_pts, k_wts);
+    //tmp = gauss_quadrature(n_k_pts, 1, 0.0, 0.0, -k_infinity, k_infinity, k_pts, k_wts);
+	double inverse_smearing_width = 2.0;
+    tmp = gauss_quadrature(n_k_pts, 6, 0.0, 0.0, 0.0, inverse_smearing_width, k_pts, k_wts);
     tmp = gauss_quadrature(n_tau_pts, 1, 0.0, 0.0, taui, tauf, tau_pts, tau_wts);
     //tmp = gauss_quadrature(n_integ_besselK_points, 1, 0.0, 0.0, -1.0, 1.0, x_integ_besselK_pts, x_integ_besselK_wts);
 
@@ -196,13 +232,14 @@ int main(int argc, char *argv[])
 	running_integral_array = new double [n_tau_pts];
 	set_running_transport_integral(running_integral_array);
 
+
 	ofstream output_dndn_k, output_dndn_Dxi;	//files for Fourier output, coordinate-space output
-	string dndn_k_filename = "dndn_k.dat";
-	string dndn_Dxi_filename = "dndn_Dxi.dat";
+	string dndn_k_filename = filename2;
+	string dndn_Dxi_filename = filename3;
 	if (print_dndn_k)
-		output_dndn_.open ( dndn_k_filename.c_str ( ) );
+		output_dndn_k.open(dndn_k_filename.c_str());
 	if (print_dndn_Dxi)
-		output_dndn_Dxi.open ( dndn_Dxi_filename.c_str ( ) );
+		output_dndn_Dxi.open(dndn_Dxi_filename.c_str());
 
 	for (int ik = 0; ik < n_k_pts; ++ik)
 	{
@@ -214,13 +251,17 @@ int main(int argc, char *argv[])
 		Ctnn_no_SC_vec.push_back(results[1]);
 		SC_vec.push_back(results[2]);
 		if (print_dndn_k)
-			output_dndn_k << k << "   " << setprecision(15) << results[0] << "   " << results[1] << "   " << results[2] << endl;
+			output_dndn_k << k << "   " << setprecision(15)
+							<< results[0].real() << "   "
+							<< results[1].real() << "   "
+							<< results[2].real() << endl;
 	}
 
 	//start computing actual charge balance functions here
 	for (int iDy = 0; iDy < n_Dy; iDy++)
 	{
 		double Delta_y = (double)iDy * Delta_y_step;
+		double Delta_xi = Delta_y;
 
 		complex<double> sum(0,0), sum_no_SC(0,0);
 		complex<double> sum_Dxi(0,0), sum_Dxi_no_SC(0,0), SC_Dxi(0,0);
@@ -240,9 +281,9 @@ int main(int argc, char *argv[])
 			sum_no_SC += k_wts[ik] * exp(i * k * Delta_y)
 					* ( Ftn1 * conj(Ftn2) * Ctnn_no_SC );
 
-			sum_Dxi += k_wts[ik] * exp(i * k * Delta_y) * Ctnn;
-			sum_Dxi_no_SC += k_wts[ik] * exp(i * k * Delta_y) * Ctnn_no_SC;
-			SC_Dxi += k_wts[ik] * exp(i * k * Delta_y) * SC_loc;
+			sum_Dxi += k_wts[ik] * exp(-0.01*inverse_smearing_width*inverse_smearing_width*k*k) * exp(i * k * Delta_xi) * Ctnn;
+			sum_Dxi_no_SC += k_wts[ik] * exp(-0.01*inverse_smearing_width*inverse_smearing_width*k*k) * exp(i * k * Delta_xi) * Ctnn_no_SC;
+			SC_Dxi += k_wts[ik] * exp(-0.01*inverse_smearing_width*inverse_smearing_width*k*k) * exp(i * k * Delta_xi) * SC_loc;
 
 			//cerr << k << "   " << Ctnn.real() << "   " << Ctnn_no_SC.real() 
 			//		<< "   " << (Ftn1 * conj(Ftn2)).real()
@@ -250,17 +291,18 @@ int main(int argc, char *argv[])
 			//		<< "   " << (Ftn1 * conj(Ftn2) * Ctnn_no_SC).real() << endl;
 		}
 
-		double Delta_xi = Delta_y;
 		//omit smearing function factors to just F.T. back to xi-space
 		if (print_dndn_Dxi)
-			output_dndn_Dxi << Delta_xi << "   " << setprecision(15) << sum_Dxi << "   " << sum_Dxi_no_SC << "   " << SC_Dxi << endl;
-
-		//if (1) return (0);
+			output_dndn_Dxi << Delta_xi << "   " << setprecision(15)
+							<< sum_Dxi.real() << "   "
+							<< sum_Dxi_no_SC.real() << "   "
+							<< SC_Dxi.real() << endl;
 
 		complex<double> result = (ds*tauf*Tf / (4.0*M_PI*M_PI * norm)) * sum;
 		complex<double> result_no_SC = (ds*tauf*Tf / (4.0*M_PI*M_PI * norm)) * sum_no_SC;
 
-		cout << setprecision(15) << Delta_y << "   "
+		output_results
+				<< setprecision(15) << Delta_y << "   "
 				<< result.real() << "   " << result.imag() << "   "
 				<< result_no_SC.real() << "   " << result_no_SC.imag() << endl;
 	}
@@ -269,6 +311,7 @@ int main(int argc, char *argv[])
 		output_dndn_k.close();
 	if (print_dndn_Dxi)
 		output_dndn_Dxi.close();
+	output_results.close();
 
 	return 0;
 }

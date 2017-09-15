@@ -33,8 +33,10 @@ inline int sgn(T val) {
 string truestring = "true";
 string falsestring = "false";
 
-bool white_noise = true;
-bool white_Green = true;
+//bool white_noise = true;
+//bool white_Green = true;
+extern bool white_noise;
+extern bool white_Green;
 
 inline string return_boolean_string(bool test){return (test ? truestring : falsestring);}
 
@@ -42,6 +44,7 @@ struct chosen_particle
 {
 	int index;
 	double mass;
+	string name;
 };
 
 extern const double hbarC;
@@ -483,6 +486,65 @@ inline void Ctilde_n_n(double k, vector<complex<double> > * results)	//allows to
 	(*results)[0] /= tauf*tauf;	//fm^2; note that we must include extra factor of tauf^-2 for consistency with manuscript
 	(*results)[1] /= tauf*tauf;	//fm^2; note that we must include extra factor of tauf^-2 for consistency with manuscript
 	(*results)[2] /= tauf*tauf;	//do the same for self-correlations...
+
+	return;
+}
+
+//Miscellaneous stuff
+void replace_character(std::string & tempstring, char swap_out, char swap_in)
+{
+	int len = tempstring.length();
+	for(unsigned int i = 0; i < len; i++)
+	{
+		char c = tempstring[i];
+		if (c == swap_out)
+			tempstring[i] = swap_in;
+	}
+	
+	if (tempstring[len - 1] == swap_in)
+		tempstring.erase( len - 1 );
+	
+	return;
+}
+
+string get_vQ2_string()
+{
+	ostringstream vQ2stream;
+	vQ2stream << setprecision(3) << std::fixed << vQ2;
+	string vQ2string = vQ2stream.str();
+	replace_character(vQ2string, '.', '_');
+
+	return (vQ2string);
+}
+
+string get_snapshot_string()
+{
+	ostringstream snapshotstream;
+	snapshotstream << setprecision(2) << std::fixed << fraction_of_evolution;
+	string snapshotstring = snapshotstream.str();
+	replace_character(snapshotstring, '.', '_');
+
+	return (snapshotstring);
+}
+
+void set_outfilenames(
+						string & mainResultsFilename,
+						string & dndn_k_Filename,
+						string & dndn_Dxi_Filename
+						)
+{
+	string noiseStem = white_noise ? "white" : "color";
+	string GreenStem = white_Green ? "white" : "color";
+
+	string vQ2string = ( white_noise and white_Green ) ? "" : "_vQ2_" + get_vQ2_string();
+	string snapshotstring = "_snapshot_" + get_vQ2_string();
+
+	mainResultsFilename = "twoPC_" + particle1.name + particle2.name + "_"
+							+ noiseStem + "_noise_" + GreenStem + "_Green" + vQ2string + snapshotstring + ".dat";
+	dndn_k_Filename = "dndn_k_" + particle1.name + particle2.name + "_"
+							+ noiseStem + "_noise_" + GreenStem + "_Green" + vQ2string + snapshotstring + ".dat";
+	dndn_Dxi_Filename = "dndn_Dxi_" + particle1.name + particle2.name + "_"
+							+ noiseStem + "_noise_" + GreenStem + "_Green" + vQ2string + snapshotstring + ".dat";
 
 	return;
 }
