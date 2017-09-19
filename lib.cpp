@@ -423,6 +423,26 @@ complex<double> Hypergeometric1F1(complex<double> a_in, complex<double> b_in, co
 	return (sum);
 }
 
+complex<double> Hypergeometric1F2(complex<double> a_in, complex<double> b0_in, complex<double> b1_in, complex<double> z_in)
+{
+	complex<double> a = a_in, b0 = b0_in, b1 = b1_in, z = z_in;
+
+	complex<double> sum = 0.0, oldsum = 0.0;
+	complex<double> term = 1.0;
+	long int i = 0;
+	do
+	{
+		oldsum = sum;
+		sum += term;
+		term *= a*z/(b0*b1*double(i+1));
+		a += 1.0;
+		b0 += 1.0;
+		b1 += 1.0;
+		++i;
+	} while (2.0*abs(sum-oldsum)/abs(sum+oldsum) >= tolerance);
+	return (sum);
+}
+
 /*
 complex<double> SFL_Hypergeometric1F1(complex<double> a_in, complex<double> b_in, complex<double> z_in)
 {

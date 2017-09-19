@@ -18,15 +18,15 @@ using namespace std;
 	// 3 - kaon
 int particle_to_study;
 
-bool print_dndn_k = true;
-bool print_dndn_Dxi = true;
+bool print_dndn_k = false;
+bool print_dndn_Dxi = false;
 //white noise is default
 bool white_noise = true;
 bool white_Green = true;
 
 const double hbarC = 197.33;
 const double xi_infinity = 5.0;
-const double k_infinity = 20.0;
+const double k_infinity = 100.0;
 
 const int n_Dy = 51;
 double Delta_y_step = 0.1;
@@ -153,22 +153,6 @@ int main(int argc, char *argv[])
 	chi_tilde_T_mu = chi_T_mu / Delta;
 	chi_tilde_T_T = chi_T_T / Delta;
 
-	//output some parameters from calculation
-	ofstream output_results;
-	output_results.open(filename1.c_str());
-
-	output_results 
-			<< "#########################################################" << endl
-			<< "# Using following parameters:" << endl
-			<< "# resultsPath = " << resultsPath << endl
-			<< "# fraction_of_evolution = " << fraction_of_evolution << endl
-			<< "# taui = " << taui << " fm/c, tauf = " << tauf << " fm/c" << endl
-			<< "# si = " << si << ", sf = " << sf << endl
-			<< "# Ti = " << Ti*hbarC << " MeV, Tf = " << Tf*hbarC << " MeV" << endl
-			<< "# v_Q^2 = " << vQ2 << ", D_Q = " << DQ << " fm/c, tau_Q = " << tauQ << " fm/c" << endl
-			<< "# chi_{T,T} = " << chi_T_T << ", chi_{T,mu} = chi_{mu,T} = " << chi_T_mu << ", chi_{mu,mu} = " << chi_mu_mu << endl
-			<< "#########################################################" << endl;
-
     // set up grid points for integrations
     xi_pts_minf_inf = new double [n_xi_pts];
     tau_pts = new double [n_tau_pts];
@@ -180,7 +164,6 @@ int main(int argc, char *argv[])
     int tmp = gauss_quadrature(n_xi_pts, 1, 0.0, 0.0, -xi_infinity, xi_infinity, xi_pts_minf_inf, xi_wts_minf_inf);
     tmp = gauss_quadrature(n_k_pts, 1, 0.0, 0.0, -k_infinity, k_infinity, k_pts, k_wts);
 	double inverse_smearing_width = 1.0;
-    //tmp = gauss_quadrature(n_k_pts, 6, 0.0, 0.0, 0.0, inverse_smearing_width, k_pts, k_wts);
     tmp = gauss_quadrature(n_tau_pts, 1, 0.0, 0.0, taui, tauf, tau_pts, tau_wts);
 
 	T_pts = new double [n_tau_pts];
@@ -188,57 +171,6 @@ int main(int argc, char *argv[])
 	//computes tau-dependence of T for remainder of calculation
 	for (int it = 0; it < n_tau_pts; ++it)
 		T_pts[it] = guess_T(tau_pts[it]);
-
-	//////////////////////////////////////////////////////////
-	//Check hypergeometric function implementations
-	/*
-	for (int ik = 0; ik < n_k_pts; ++ik)
-	for (int it = 0; it < n_tau_pts; ++it)
-	{
-		complex<double> k = k_pts[ik];
-		complex<double> x = tau_pts[it] / tauQ;
-		complex<double> lambda = sqrt(0.25 - vQ2*k*k);
-		complex<double> mlambda = -sqrt(0.25 - vQ2*k*k);
-
-		complex<double> result1 = Hypergeometric1F1(lambda+0.5, 2.0*lambda+1.0, x);
-		complex<double> result2 = Hypergeometric1F1(mlambda+0.5, 2.0*mlambda+1.0, x);
-		complex<double> result3 = Hypergeometric1F1(lambda+1.5, 2.0*lambda+1.0, x);
-		complex<double> result4 = Hypergeometric1F1(mlambda+1.5, 2.0*mlambda+1.0, x);
-
-		cout << setprecision(15) << (lambda+0.5).real() << "   " << (lambda+0.5).imag() << "   "
-				<< (2.0*lambda+1.0).real() << "   " << (2.0*lambda+1.0).imag() << "   "
-				<< x.real() << "   " << x.imag() << "   "
-				<< result1.real() << "   " << result1.imag() << endl;
-		cout << setprecision(15) << (mlambda+0.5).real() << "   " << (mlambda+0.5).imag() << "   "
-				<< (2.0*mlambda+1.0).real() << "   " << (2.0*mlambda+1.0).imag() << "   "
-				<< x.real() << "   " << x.imag() << "   "
-				<< result2.real() << "   " << result2.imag() << endl;
-		cout << setprecision(15) << (lambda+1.5).real() << "   " << (lambda+1.5).imag() << "   "
-				<< (2.0*lambda+1.0).real() << "   " << (2.0*lambda+1.0).imag() << "   "
-				<< x.real() << "   " << x.imag() << "   "
-				<< result3.real() << "   " << result3.imag() << endl;
-		cout << setprecision(15) << (mlambda+1.5).real() << "   " << (mlambda+1.5).imag() << "   "
-				<< (2.0*mlambda+1.0).real() << "   " << (2.0*mlambda+1.0).imag() << "   "
-				<< x.real() << "   " << x.imag() << "   "
-				<< result4.real() << "   " << result4.imag() << endl;
-	}
-	if (1) return (0);
-	*/
-	//Check colored Green's function implementation
-	/*
-	for (int ik = 0; ik < n_k_pts; ++ik)
-	for (int it = 0; it < n_tau_pts; ++it)
-	{
-		double k = k_pts[ik];
-		double tau = tau_pts[it];
-		double x = tau / tauQ;
-		complex<double> Gt = Gtilde_n_color(k, tauf, tau);
-		complex<double> aGt = asymptotic_Gtilde_n_color(k, tauf, tau);
-		cout << setprecision(20) << k << "   " << x << "   " << Gt.real() << "   " << Gt.imag() << "   " << aGt.real() << "   " << aGt.imag() << endl;
-	}
-	if (1) return (0);
-	*/
-	//////////////////////////////////////////////////////////
 
 	//get the ensemble averaged spectra
 	double norm = integrate_1D(norm_int, xi_pts_minf_inf, xi_wts_minf_inf, n_xi_pts, &particle1);	//by definition of charge balance function (CBF)
@@ -290,54 +222,48 @@ int main(int argc, char *argv[])
 							<< results[2].real() << endl;
 	}
 
-	//start computing actual charge balance functions here
-	for (int iDy = 0; iDy < n_Dy; iDy++)
+	//convert self-correlations to Delta_xi space
+	const int n_SC_k_pts = 5000;
+	double * SC_k_pts = new double [n_SC_k_pts];
+	double * SC_k_wts = new double [n_SC_k_pts];
+	tmp = gauss_quadrature(n_SC_k_pts, 6, 0.0, 0.0, 0.0, 0.0005/vQ2, SC_k_pts, SC_k_wts);
+	for (int ixi = 0; ixi < 501; ++ixi)
 	{
-		double Delta_y = (double)iDy * Delta_y_step;
-		double Delta_xi = Delta_y;
-
-		complex<double> sum(0,0), sum_no_SC(0,0);
-		complex<double> sum_Dxi(0,0), sum_Dxi_no_SC(0,0), SC_Dxi(0,0);
-
-		for (int ik = 0; ik < n_k_pts; ++ik)
+		complex<double> SC_xi_sum = 0.0;
+		double Delta_xi = -0.1 + (double)ixi * 0.0004;
+		for (int ik = 0; ik < n_SC_k_pts; ++ik)
 		{
-			double k = k_pts[ik];
-
-			complex<double> Ftn1 = Ftn_particle1_vec[ik];
-			complex<double> Ftn2 = Ftn_particle2_vec[ik];
-			complex<double> Ctnn = Ctnn_vec[ik];
-			complex<double> Ctnn_no_SC = Ctnn_no_SC_vec[ik];
-
-			sum += k_wts[ik] * exp(i * k * Delta_y)
-					* ( Ftn1 * conj(Ftn2) * Ctnn );
-			sum_no_SC += k_wts[ik] * exp(i * k * Delta_y)
-					* ( Ftn1 * conj(Ftn2) * Ctnn_no_SC );
-
-			sum_Dxi += k_wts[ik] * exp(i * k * Delta_xi) * Ctnn;
-			sum_Dxi_no_SC += k_wts[ik] * exp(i * k * Delta_xi) * Ctnn_no_SC;
+			double SC_k = SC_k_pts[ik];
+			double SC_loc = 0.0;
+			if (SC_k < k_pts[0])
+			{
+				double lSC0 = log(SC_vec[0].real());
+				double lSC1 = log(SC_vec[1].real());
+				double slope = (lSC1 - lSC0) / ( log(abs(k_pts[1])) - log(abs(k_pts[0])) );
+				SC_loc = exp( lSC0 + slope * ( log(abs(SC_k)) - log(abs(k_pts[0])) ) - 0.0*SC_k*SC_k/(k_infinity*k_infinity) );
+			}
+			else if (SC_k > k_pts[n_k_pts-1])
+			{
+				double lSC0 = log(SC_vec[n_k_pts-2].real());
+				double lSC1 = log(SC_vec[n_k_pts-1].real());
+				double slope = (lSC1 - lSC0) / ( log(abs(k_pts[n_k_pts-1])) - log(abs(k_pts[n_k_pts-2])) );
+				SC_loc = exp(lSC0 + slope * ( log(abs(SC_k)) - log(abs(k_pts[n_k_pts-2])) ) - 0.0*SC_k*SC_k/(k_infinity*k_infinity) );
+			}
+			else
+			{
+				SC_loc = interpolate1D(k_pts, SC_arr, SC_k, n_k_pts, 1, false);
+			}
+			if (ixi == 0)
+				cerr << SC_k << "   " << SC_loc << endl;
+			SC_xi_sum += SC_k_wts[ik] * exp(i * SC_k * Delta_xi) * SC_loc;
 		}
-
-		//omit smearing function factors to just F.T. back to xi-space
-		/*if (print_dndn_Dxi)
-			output_dndn_Dxi << Delta_xi << "   " << setprecision(15)
-							<< sum_Dxi.real() << "   "
-							<< sum_Dxi_no_SC.real() << "   "
-							<< SC_Dxi.real() << endl;*/
-
-		complex<double> result = (ds*tauf*Tf / (4.0*M_PI*M_PI * norm)) * sum;
-		complex<double> result_no_SC = (ds*tauf*Tf / (4.0*M_PI*M_PI * norm)) * sum_no_SC;
-
-		output_results
-				<< setprecision(15) << Delta_y << "   "
-				<< result.real() << "   " << result.imag() << "   "
-				<< result_no_SC.real() << "   " << result_no_SC.imag() << endl;
+		cout << Delta_xi << "   " << SC_xi_sum.real() << endl;
 	}
 
 	if (print_dndn_k)
 		output_dndn_k.close();
 	if (print_dndn_Dxi)
 		output_dndn_Dxi.close();
-	output_results.close();
 
 	return 0;
 }
