@@ -23,24 +23,25 @@ mpl.rcParams['ytick.labelsize'] = labelsize
 #filename = sys.argv[1]
 
 #grid information
-nDY = 51
+nDY = 501
 
 panelLabels = ['(a)', '(b)']
 panelCounter = 0
 
-#CBFIndices = ['\pi\pi','p \\bar{p}','K K']
-#filenames = ['ecf_pion_T0_250MeV.out', 'ecf_proton_T0_250MeV.out', 'ecf_kaon_T0_250MeV.out']
-#filenames = ['ecf_protonKaon_T0_350MeV.out']
-#filenames = ['ecf_pion_T0_350MeV.out', 'ecf_proton_T0_350MeV.out', 'ecf_kaon_T0_350MeV.out']
+resultsDir='results/'
+
+CBFIndices = ['\pi\pi','p \\bar{p}','K K']
+particleLabels = ['pi','p','K']
 #ExpDataFilenames = ['star_pK.dat']
 #ExpDataFilenames = ['star_pipi.dat', 'star_ppbar.dat', 'star_KK.dat']
-vQ2_labels = ['0_1', '0_333', '0_5', '1_0', '2_0', '5_0', '10_0']
-noiseType = 'white'
-GreenType = 'color'
-filenames = ['results_%(NT)s_noise_%(GT)s_Green_vQ2_%(vQ2s)s.out' % {'NT': noiseType, 'GT': GreenType, 'vQ2s': vQ2} for vQ2 in vQ2_labels]
+vQ2Labels = ['0_100', '0_250', '0_333', '0_500', '0_750', '1_000', '2_000', '5_000', '10_000', '100_000']
+#snapshotLabels = ['0_05', '0_10', '0_15', '0_20', '0_25', '0_30', \
+#                    '0_35', '0_40', '0_45', '0_50', '0_55', '0_60', \
+#                    '0_65', '0_70', '0_75', '0_80', '0_85', '0_90', '0_95', '1_00']
+#snapshotLabels = ['0_05', '0_10', '0_15', '0_20', '0_25', '0_30', '0_35', '0_40', '0_45', '0_50']
+snapshotLabels = ['0_05', '0_10', '0_15', '0_20', '0_25', '0_50', '0_75', '1_00']
 
-
-lineColors = ['red', 'blue', 'green', 'purple', 'orange', 'cyan']
+#lineColors = ['red', 'blue', 'green', 'purple', 'orange', 'cyan']
 #plotTitles = ['Lattice', r'$2\pi D_Q T = 0.5$', r'$2\pi D_Q T = 1.0$', r'$2\pi D_Q T = 1.5$']
 
 hbarC = 0.197327053
@@ -99,8 +100,190 @@ def plotCorrelations():
 	#print 'Saved to', outfilename
 
 
+#################################################################
+# Plot two-particle correlation snapshots
+def plotTwoPCSnapshots(particleLabel, noiseType, GreenType, vQ2, subtractSelfCorrelations):
+	# set-up
+	plotfontsize = 12
+	fig, ax = plt.subplots(1, 1)
+	fig.subplots_adjust(wspace=0.0, hspace=0.0) 
+	lw = 2.0
+
+	twoPC_color_filenames = resultsDir + 'twoPC_%(PL)s%(PL)s_%(NT)s_noise_%(GT)s_Green_vQ2_%(vQ2)s_snapshot_%(frac)s.dat'
+	twoPC_white_filenames = resultsDir + 'twoPC_%(PL)s%(PL)s_white_noise_white_Green_snapshot_%(frac)s.dat'
+
+	cm = plt.get_cmap('gist_rainbow') 
+	cNorm  = colors.Normalize(vmin=0, vmax=len(snapshotLabels))
+	scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cm)
+
+	idx=0
+	for fraction in snapshotLabels:
+		if noiseType=='white' and GreenType=='white':
+			filename = twoPC_white_filenames % {'PL': particleLabel, 'frac': fraction}
+		else:
+			filename = twoPC_color_filenames % {'PL': particleLabel, 'NT': noiseType, 'GT': GreenType, 'vQ2': vQ2, 'frac': fraction}
+		
+		columnToPlot = 1
+		SCstring = '_withSC'
+		if subtractSelfCorrelations:
+			columnToPlot = 2
+			SCstring = '_withoutSC'
+		chosenCols = [0, 1, 3]
+		
+		colorVal = scalarMap.to_rgba(len(snapshotLabels)-idx-1)
+		#colorVal = scalarMap.to_rgba(idx)
+
+		# read in file
+		data = loadtxt(filename, usecols=tuple(chosenCols))
+
+		#print 'Loading data file...'
+		ax.plot(data[:,0], data[:,columnToPlot], color=colorVal, linestyle='-', linewidth=lw, label=fraction)
+		idx+=1
+	
+	
+	ax.axhline(0.0, color='black', linewidth=1)
+	
+	ax.set_xlabel(r'$\Delta y$', fontsize = labelsize + 10)
+	ax.set_ylabel(r'$B_{\pi\pi}$', fontsize = labelsize + 10)
+	ax.legend(loc=0, ncol=1, prop={'size': plotfontsize+5})
+	plt.title(noiseType + ' noise, ' + GreenType + ' Green function: subtractSC = ' + str(subtractSelfCorrelations))
+	
+	#plt.show(block=False)
+	outfilename = resultsDir + 'twoPC_%(PL)s%(PL)s_vQ2_%(vQ2)s_snapshots' % {'PL': particleLabel, 'vQ2': vQ2} + SCstring + '.pdf'
+	plt.savefig(outfilename, format='pdf', bbox_inches='tight')
+	print 'Saved to', outfilename
+
+
+
+#################################################################
+# Plot snapshots
+def plotSnapshots(particleLabel, space, noiseType, GreenType, vQ2, subtractSelfCorrelations):
+	# set-up
+	plotfontsize = 12
+	fig, ax = plt.subplots(1, 1)
+	fig.subplots_adjust(wspace=0.0, hspace=0.0) 
+	lw = 2.0
+
+	dndn_color_filenames = resultsDir + 'dndn_%(space)s_%(PL)s%(PL)s_%(NT)s_noise_%(GT)s_Green_vQ2_%(vQ2)s_snapshot_%(frac)s.dat'
+	dndn_white_filenames = resultsDir + 'dndn_%(space)s_%(PL)s%(PL)s_white_noise_white_Green_snapshot_%(frac)s.dat'
+
+	cm = plt.get_cmap('jet') 
+	cNorm  = colors.Normalize(vmin=0, vmax=len(snapshotLabels))
+	scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cm)
+
+	idx=0
+	for fraction in snapshotLabels:
+		if noiseType=='white' and GreenType=='white':
+			filename = dndn_white_filenames % {'PL': particleLabel, 'space': space, 'frac': fraction}
+		else:
+			filename = dndn_color_filenames % {'PL': particleLabel, 'space': space, 'NT': noiseType, 'GT': GreenType, 'vQ2': vQ2, 'frac': fraction}
+		
+		columnToPlot = 1
+		SCstring = '_withSC'
+		if subtractSelfCorrelations:
+			columnToPlot = 2
+			SCstring = '_withoutSC'
+		chosenCols = [0, 1, 2]
+		
+		colorVal = scalarMap.to_rgba(len(snapshotLabels)-idx-1)
+		#colorVal = scalarMap.to_rgba(idx)
+
+		# read in file
+		data = loadtxt(filename, usecols=tuple(chosenCols))
+
+		#print 'Loading data file...'
+		ax.plot(data[:,0], data[:,columnToPlot], color=colorVal, linestyle='-', linewidth=lw, label=fraction)
+		idx+=1
+	
+	
+	ax.axhline(0.0, color='black', linewidth=1)
+	
+	ax.set_xlabel(r'$k$', fontsize = labelsize + 10)
+	ax.set_ylabel(r'$\left< \delta \tilde n(k) \delta \tilde n(-k) \right>$', fontsize = labelsize + 10)
+	ax.legend(loc=0, ncol=1, prop={'size': plotfontsize+5})
+	plt.title(noiseType + ' noise, ' + GreenType + ' Green function: subtractSC = ' + str(subtractSelfCorrelations))
+	
+	#plt.show(block=False)
+	outfilename = resultsDir + 'dndn_%(space)s_%(PL)s%(PL)s_vQ2_%(vQ2)s_snapshots' % {'PL': particleLabel, 'space': space, 'vQ2': vQ2} + SCstring + '.pdf'
+	plt.savefig(outfilename, format='pdf', bbox_inches='tight')
+	print 'Saved to', outfilename
+
+
+#################################################################
+# Plot snapshots
+def plotChosenvQ2s(fileStem, subtractSelfCorrelations, my_y_label, chosenCols):
+	# set-up
+	plotfontsize = 12
+	fig, ax = plt.subplots(1, 1)
+	fig.subplots_adjust(wspace=0.0, hspace=0.0) 
+	lw = 2.0
+
+	fraction = '1_00'
+
+	dndn_color_filenames = resultsDir + fileStem + '_color_noise_color_Green_vQ2_%(vQ2)s_snapshot_%(frac)s.dat'
+	dndn_white_filenames = resultsDir + fileStem + '_white_noise_white_Green_snapshot_%(frac)s.dat'
+
+	cm = plt.get_cmap('jet') 
+	cNorm  = colors.Normalize(vmin=0, vmax=len(vQ2Labels)+1)
+	scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cm)
+
+	idx=0
+	for vQ2 in vQ2Labels:
+		if vQ2=='100_000':
+			filename = dndn_white_filenames % {'frac': fraction}
+		else:
+			filename = dndn_color_filenames % {'vQ2': vQ2, 'frac': fraction}
+		
+		columnToPlot = 1
+		SCstring = '_withSC'
+		if subtractSelfCorrelations:
+			columnToPlot = 2
+			SCstring = '_withoutSC'
+		#chosenCols = [0, 1, 2]
+		
+		colorVal = scalarMap.to_rgba(len(vQ2Labels)+1-idx-1)
+		#colorVal = scalarMap.to_rgba(idx)
+
+		# read in file
+		data = loadtxt(filename, usecols=tuple(chosenCols))
+
+		#print 'Loading data file...'
+		ax.plot(data[:,0], data[:,columnToPlot], color=colorVal, linestyle='-', linewidth=lw, label=fraction)
+		idx+=1
+	
+	
+	ax.axhline(0.0, color='black', linewidth=1)
+	
+	ax.set_xlabel(r'$k$', fontsize = labelsize + 10)
+	ax.set_ylabel(my_y_label, fontsize = labelsize + 10)
+	ax.legend(loc=0, ncol=1, prop={'size': plotfontsize+5})
+	plt.title(fileStem + ': vQ2 comparison, subtractSC = ' + str(subtractSelfCorrelations))
+	
+	plt.show(block=False)
+	outfilename = resultsDir + fileStem + '_vQ2_%(vQ2)s_snapshots' % {'vQ2': vQ2} + SCstring + '.pdf'
+	#plt.savefig(outfilename, format='pdf', bbox_inches='tight')
+	print 'Saved to', outfilename
+
+
+
+
+
+#################################################################
 def generate_all_plots():
-	plotCorrelations()
+	#plotCorrelations()
+	#plotTwoPCSnapshots('pi', 'white', 'white', '100', True)	#vQ2 value irrelevant for pure white noise
+	#plotTwoPCSnapshots('pi', 'color', 'color', '0_333', True)
+	#plotTwoPCSnapshots('pi', 'white', 'white', '100', False)	#vQ2 value irrelevant for pure white noise
+	#plotTwoPCSnapshots('pi', 'color', 'color', '0_333', False)
+	#plotSnapshots('pi', 'k', 'white', 'white', '100', True)	#vQ2 value irrelevant for pure white noise
+	#plotSnapshots('pi', 'k', 'color', 'color', '0_333', True)
+	#plotSnapshots('pi', 'k', 'white', 'white', '100', False)	#vQ2 value irrelevant for pure white noise
+	#plotSnapshots('pi', 'k', 'color', 'color', '0_333', False)
+	fileStem = 'dndn_%(space)s_%(PL)s%(PL)s' % {'PL': 'pi', 'space': 'k'}
+	plotChosenvQ2s(fileStem, True, r'$\left< \delta \tilde n(k) \delta \tilde n(-k) \right>$', [0, 1, 2])
+	#fileStem = 'twoPC_%(PL)s%(PL)s' % {'PL': 'pi'}
+	#plotChosenvQ2s(fileStem, True, r'$B_{\pi\pi}$', [0, 1, 3])
+	pause()
 
 
 if __name__ == "__main__":
