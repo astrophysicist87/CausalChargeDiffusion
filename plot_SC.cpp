@@ -8,6 +8,8 @@
 #include <complex>
 #include <algorithm>
 
+#include <gsl/gsl_sf_gamma.h>
+
 using namespace std;
 
 #include "defs.h"
@@ -46,7 +48,7 @@ double A0, A2, A4, C0, B, mui, muf, xi0, xibar0, etaBYs, RD, sPERn, Nf, qD, si, 
 double a_at_tauf, vs2_at_tauf, vn2_at_tauf, vsigma2_at_tauf;
 
 const int n_xi_pts = 5000;
-const int n_k_pts = 100;	//# of k points should be even to avoid poles in 1F1, etc.!!!
+const int n_k_pts = 10;	//# of k points should be even to avoid poles in 1F1, etc.!!!
 const int n_tau_pts = 201;
 double * xi_pts_minf_inf, * xi_wts_minf_inf;
 double * k_pts, * k_wts;
@@ -222,15 +224,16 @@ int main(int argc, char *argv[])
 							<< results[2].real() << endl;
 	}
 
+	
 	//convert self-correlations to Delta_xi space
 	const int n_SC_k_pts = 5000;
 	double * SC_k_pts = new double [n_SC_k_pts];
 	double * SC_k_wts = new double [n_SC_k_pts];
-	tmp = gauss_quadrature(n_SC_k_pts, 6, 0.0, 0.0, 0.0, 0.0005/vQ2, SC_k_pts, SC_k_wts);
-	for (int ixi = 0; ixi < 501; ++ixi)
+	tmp = gauss_quadrature(n_SC_k_pts, 6, 0.0, 0.0, 0.0, 0.00005/vQ2/vQ2, SC_k_pts, SC_k_wts);
+	for (int ixi = 0; ixi < 5001; ++ixi)
 	{
 		complex<double> SC_xi_sum = 0.0;
-		double Delta_xi = -0.1 + (double)ixi * 0.0004;
+		double Delta_xi = -0.1 + (double)ixi * 0.00004;
 		for (int ik = 0; ik < n_SC_k_pts; ++ik)
 		{
 			double SC_k = SC_k_pts[ik];
@@ -259,6 +262,47 @@ int main(int argc, char *argv[])
 		}
 		cout << Delta_xi << "   " << SC_xi_sum.real() << endl;
 	}
+	
+
+	/*
+	//convert self-correlations to Delta_xi space
+	double lSC0 = log(SC_vec[0].real());
+	double lSC1 = log(SC_vec[1].real());
+	double lower_slope = abs((lSC1 - lSC0) / ( log(abs(k_pts[1])) - log(abs(k_pts[0])) ));
+	lSC0 = log(SC_vec[n_k_pts-2].real());
+	lSC1 = log(SC_vec[n_k_pts-1].real());
+	double upper_slope = abs((lSC1 - lSC0) / ( log(abs(k_pts[n_k_pts-1])) - log(abs(k_pts[n_k_pts-2])) ));
+
+	for (int ixi = 0; ixi < 501; ++ixi)
+	{
+		double Delta_xi = -0.1 + (double)ixi * 0.0004;
+
+		complex<double> lower_region
+				= 2.0 * (
+									pow(k_infinity, 1.0-lower_slope)
+									* Hypergeometric1F2(0.5*(1.0-lower_slope), 0.5, 0.5*(3.0-lower_slope), -0.25*k_infinity*k_infinity*Delta_xi*Delta_xi)
+									/ (-1.0+lower_slope)
+									+ pow(abs(Delta_xi), -1.0+lower_slope) * gsl_sf_gamma(1.0-lower_slope) * sin(0.5*M_PI*lower_slope)
+									);
+		complex<double> upper_region
+				= 2.0 * (
+									pow(k_infinity, 1.0-upper_slope)
+									* Hypergeometric1F2(0.5*(1.0-upper_slope), 0.5, 0.5*(3.0-upper_slope), -0.25*k_infinity*k_infinity*Delta_xi*Delta_xi)
+									/ (-1.0+upper_slope)
+									+ pow(abs(Delta_xi), -1.0+upper_slope) * gsl_sf_gamma(1.0-upper_slope) * sin(0.5*M_PI*upper_slope)
+									);
+
+		complex<double> SC_xi_sum = lower_region + upper_region;
+
+		for (int ik = 0; ik < n_k_pts; ++ik)
+		{
+			double k = k_pts[ik];
+			double SC_loc = SC_vec[ik].real();
+			SC_xi_sum += k_wts[ik] * exp(i * k * Delta_xi) * SC_loc;
+		}
+		cout << Delta_xi << "   " << SC_xi_sum.real() << endl;
+	}
+	*/
 
 	if (print_dndn_k)
 		output_dndn_k.close();
