@@ -210,7 +210,7 @@ def plotSnapshots(particleLabel, space, noiseType, GreenType, vQ2, subtractSelfC
 
 
 #################################################################
-# Plot snapshots
+# Plot chosen vQ2s
 def plotChosenvQ2s(fileStem, subtractSelfCorrelations, my_y_label, chosenCols):
 	# set-up
 	plotfontsize = 12
@@ -266,6 +266,40 @@ def plotChosenvQ2s(fileStem, subtractSelfCorrelations, my_y_label, chosenCols):
 
 
 
+#################################################################
+# Plot self correlations
+def plotSelfCorrelations():
+	# set-up
+	plotfontsize = 12
+	fig, ax = plt.subplots(1, 1)
+	fig.subplots_adjust(wspace=0.0, hspace=0.0) 
+	lw = 3.0
+		
+	# read in file
+	data_vQ2_0_1 = loadtxt('dndn_Dxi_vQ2_0_1.out')
+	data_vQ2_0_333 = loadtxt('dndn_Dxi_vQ2_0_333.out')
+	data_vQ2_1_0 = loadtxt('dndn_Dxi_vQ2_1_0.out')
+	data_vQ2_3_0 = loadtxt('dndn_Dxi_vQ2_3_0.out')
+
+	#print 'Loading data file...'
+	ax.plot(data_vQ2_0_1[:,0], data_vQ2_0_1[:,1], color='purple', linestyle='-', linewidth=lw, label=r'$v_Q^2 = 1/10$')
+	ax.plot(data_vQ2_0_333[:,0], data_vQ2_0_333[:,1], color='blue', linestyle='-', linewidth=lw, label=r'$v_Q^2 = 1/3$')
+	ax.plot(data_vQ2_1_0[:,0], data_vQ2_1_0[:,1], color='green', linestyle='-', linewidth=lw, label=r'$v_Q^2 = 1$')
+	ax.plot(data_vQ2_3_0[:,0], data_vQ2_3_0[:,1], color='red', linestyle='-', linewidth=lw, label=r'$v_Q^2 = 3$')
+	
+	ax.axhline(0.0, color='black', linewidth=1)
+	
+	ax.set_xlabel(r'$\Delta \xi$', fontsize = labelsize + 10)
+	ax.set_ylabel(r'$\left< \delta n(\Delta \xi, \tau_f) \delta n (0, \tau_f) \right> _{\mathrm{self}}$', fontsize = labelsize + 10)
+	ax.legend(loc=0, ncol=1, prop={'size': plotfontsize+5})
+	plt.xlim(-0.099, 0.099) 
+	#plt.title(fileStem + ': vQ2 comparison, subtractSC = ' + str(subtractSelfCorrelations))
+	
+	#plt.show(block=False)
+	outfilename = 'SelfCorrelationsVsVQ2.pdf'
+	plt.savefig(outfilename, format='pdf', bbox_inches='tight')
+	print 'Saved to', outfilename
+
 
 
 #################################################################
@@ -279,11 +313,15 @@ def generate_all_plots():
 	#plotSnapshots('pi', 'k', 'color', 'color', '0_333', True)
 	#plotSnapshots('pi', 'k', 'white', 'white', '100', False)	#vQ2 value irrelevant for pure white noise
 	#plotSnapshots('pi', 'k', 'color', 'color', '0_333', False)
-	fileStem = 'dndn_%(space)s_%(PL)s%(PL)s' % {'PL': 'pi', 'space': 'k'}
-	plotChosenvQ2s(fileStem, True, r'$\left< \delta \tilde n(k) \delta \tilde n(-k) \right>$', [0, 1, 2])
+	########
+	#fileStem = 'dndn_%(space)s_%(PL)s%(PL)s' % {'PL': 'pi', 'space': 'k'}
+	#plotChosenvQ2s(fileStem, True, r'$\left< \delta \tilde n(k) \delta \tilde n(-k) \right>$', [0, 1, 2])
+	########
 	#fileStem = 'twoPC_%(PL)s%(PL)s' % {'PL': 'pi'}
 	#plotChosenvQ2s(fileStem, True, r'$B_{\pi\pi}$', [0, 1, 3])
-	pause()
+	#################
+	plotSelfCorrelations()
+	#pause()
 
 
 if __name__ == "__main__":

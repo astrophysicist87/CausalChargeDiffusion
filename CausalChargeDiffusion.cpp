@@ -19,7 +19,7 @@ using namespace std;
 int particle_to_study;
 
 bool print_dndn_k = true;
-bool print_dndn_Dxi = true;
+//bool print_dndn_Dxi = true;
 //white noise is default
 bool white_noise = true;
 bool white_Green = true;
@@ -265,8 +265,8 @@ int main(int argc, char *argv[])
 	string dndn_Dxi_filename = filename3;
 	if (print_dndn_k)
 		output_dndn_k.open(dndn_k_filename.c_str());
-	if (print_dndn_Dxi)
-		output_dndn_Dxi.open(dndn_Dxi_filename.c_str());
+	//if (print_dndn_Dxi)
+	//	output_dndn_Dxi.open(dndn_Dxi_filename.c_str());
 
 	for (int ik = 0; ik < n_k_pts; ++ik)
 	{
@@ -294,10 +294,10 @@ int main(int argc, char *argv[])
 	for (int iDy = 0; iDy < n_Dy; iDy++)
 	{
 		double Delta_y = (double)iDy * Delta_y_step;
-		double Delta_xi = Delta_y;
+		//double Delta_xi = Delta_y;
 
 		complex<double> sum(0,0), sum_no_SC(0,0);
-		complex<double> sum_Dxi(0,0), sum_Dxi_no_SC(0,0), SC_Dxi(0,0);
+		//complex<double> sum_Dxi(0,0), sum_Dxi_no_SC(0,0), SC_Dxi(0,0);
 
 		for (int ik = 0; ik < n_k_pts; ++ik)
 		{
@@ -313,8 +313,8 @@ int main(int argc, char *argv[])
 			sum_no_SC += k_wts[ik] * exp(i * k * Delta_y)
 					* ( Ftn1 * conj(Ftn2) * Ctnn_no_SC );
 
-			sum_Dxi += k_wts[ik] * exp(i * k * Delta_xi) * Ctnn;
-			sum_Dxi_no_SC += k_wts[ik] * exp(i * k * Delta_xi) * Ctnn_no_SC;
+			//sum_Dxi += k_wts[ik] * exp(i * k * Delta_xi) * Ctnn;
+			//sum_Dxi_no_SC += k_wts[ik] * exp(i * k * Delta_xi) * Ctnn_no_SC;
 		}
 
 		//omit smearing function factors to just F.T. back to xi-space
@@ -335,8 +335,8 @@ int main(int argc, char *argv[])
 
 	if (print_dndn_k)
 		output_dndn_k.close();
-	if (print_dndn_Dxi)
-		output_dndn_Dxi.close();
+	//if (print_dndn_Dxi)
+	//	output_dndn_Dxi.close();
 	output_results.close();
 
 	return 0;
