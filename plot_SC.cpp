@@ -48,8 +48,8 @@ double A0, A2, A4, C0, B, mui, muf, xi0, xibar0, etaBYs, RD, sPERn, Nf, qD, si, 
 double a_at_tauf, vs2_at_tauf, vn2_at_tauf, vsigma2_at_tauf;
 
 const int n_xi_pts = 5000;
-const int n_k_pts = 10;	//# of k points should be even to avoid poles in 1F1, etc.!!!
-const int n_tau_pts = 201;
+const int n_k_pts = 100;	//# of k points should be even to avoid poles in 1F1, etc.!!!
+const int n_tau_pts = 401;
 double * xi_pts_minf_inf, * xi_wts_minf_inf;
 double * k_pts, * k_wts;
 double * tau_pts, * tau_wts;
@@ -164,7 +164,8 @@ int main(int argc, char *argv[])
     k_wts = new double [n_k_pts];
 
     int tmp = gauss_quadrature(n_xi_pts, 1, 0.0, 0.0, -xi_infinity, xi_infinity, xi_pts_minf_inf, xi_wts_minf_inf);
-    tmp = gauss_quadrature(n_k_pts, 1, 0.0, 0.0, -k_infinity, k_infinity, k_pts, k_wts);
+    //tmp = gauss_quadrature(n_k_pts, 6, 0.0, 0.0, 0.0, 0.0005/vQ2, k_pts, k_wts);
+    tmp = gauss_quadrature(n_k_pts, 5, 0.0, 0.0, 0.0, 0.25/vQ2, k_pts, k_wts);
 	double inverse_smearing_width = 1.0;
     tmp = gauss_quadrature(n_tau_pts, 1, 0.0, 0.0, taui, tauf, tau_pts, tau_wts);
 
@@ -173,6 +174,40 @@ int main(int argc, char *argv[])
 	//computes tau-dependence of T for remainder of calculation
 	for (int it = 0; it < n_tau_pts; ++it)
 		T_pts[it] = guess_T(tau_pts[it]);
+
+	/*
+	for (int ik = 0; ik < n_k_pts; ++ik)
+	for (int it = 0; it < n_tau_pts; ++it)
+	{
+		complex<double> k = k_pts[ik];
+		complex<double> x = tau_pts[it] / tauQ;
+		complex<double> lambda = sqrt(0.25 - vQ2*k*k);
+		complex<double> mlambda = -sqrt(0.25 - vQ2*k*k);
+
+		complex<double> result1 = Hypergeometric1F1(lambda+0.5, 2.0*lambda+1.0, x);
+		complex<double> result2 = Hypergeometric1F1(mlambda+0.5, 2.0*mlambda+1.0, x);
+		complex<double> result3 = Hypergeometric1F1(lambda+1.5, 2.0*lambda+1.0, x);
+		complex<double> result4 = Hypergeometric1F1(mlambda+1.5, 2.0*mlambda+1.0, x);
+
+		cout << setprecision(15) << (lambda+0.5).real() << "   " << (lambda+0.5).imag() << "   "
+				<< (2.0*lambda+1.0).real() << "   " << (2.0*lambda+1.0).imag() << "   "
+				<< x.real() << "   " << x.imag() << "   "
+				<< result1.real() << "   " << result1.imag() << endl;
+		cout << setprecision(15) << (mlambda+0.5).real() << "   " << (mlambda+0.5).imag() << "   "
+				<< (2.0*mlambda+1.0).real() << "   " << (2.0*mlambda+1.0).imag() << "   "
+				<< x.real() << "   " << x.imag() << "   "
+				<< result2.real() << "   " << result2.imag() << endl;
+		cout << setprecision(15) << (lambda+1.5).real() << "   " << (lambda+1.5).imag() << "   "
+				<< (2.0*lambda+1.0).real() << "   " << (2.0*lambda+1.0).imag() << "   "
+				<< x.real() << "   " << x.imag() << "   "
+				<< result3.real() << "   " << result3.imag() << endl;
+		cout << setprecision(15) << (mlambda+1.5).real() << "   " << (mlambda+1.5).imag() << "   "
+				<< (2.0*mlambda+1.0).real() << "   " << (2.0*mlambda+1.0).imag() << "   "
+				<< x.real() << "   " << x.imag() << "   "
+				<< result4.real() << "   " << result4.imag() << endl;
+	}
+	if (1) return (0);
+	*/
 
 	//get the ensemble averaged spectra
 	double norm = integrate_1D(norm_int, xi_pts_minf_inf, xi_wts_minf_inf, n_xi_pts, &particle1);	//by definition of charge balance function (CBF)
@@ -224,12 +259,20 @@ int main(int argc, char *argv[])
 							<< results[2].real() << endl;
 	}
 
+	complex<double> Ctnn_no_SC_sum = 0.0;
+	for (int ik = 0; ik < n_k_pts; ++ik)
+	{
+		cout << k_pts[ik] << "   " << (Ctnn_no_SC_vec[ik]-Ctnn_no_SC_vec[0]).real() << endl;
+		Ctnn_no_SC_sum += k_wts[ik] * exp(i * k_pts[ik] * Delta_xi) * SC_loc;
+	}
+if (1) exit (0);
 	
 	//convert self-correlations to Delta_xi space
 	const int n_SC_k_pts = 5000;
 	double * SC_k_pts = new double [n_SC_k_pts];
 	double * SC_k_wts = new double [n_SC_k_pts];
-	tmp = gauss_quadrature(n_SC_k_pts, 6, 0.0, 0.0, 0.0, 0.00005/vQ2/vQ2, SC_k_pts, SC_k_wts);
+	tmp = gauss_quadrature(n_SC_k_pts, 6, 0.0, 0.0, 0.0, 0.005/vQ2, SC_k_pts, SC_k_wts);
+	//tmp = gauss_quadrature(n_SC_k_pts, 5, 0.0, 0.0, 0.0, 0.005/vQ2/sqrt(vQ2), SC_k_pts, SC_k_wts);
 	for (int ixi = 0; ixi < 5001; ++ixi)
 	{
 		complex<double> SC_xi_sum = 0.0;
@@ -243,14 +286,16 @@ int main(int argc, char *argv[])
 				double lSC0 = log(SC_vec[0].real());
 				double lSC1 = log(SC_vec[1].real());
 				double slope = (lSC1 - lSC0) / ( log(abs(k_pts[1])) - log(abs(k_pts[0])) );
-				SC_loc = exp( lSC0 + slope * ( log(abs(SC_k)) - log(abs(k_pts[0])) ) - 0.0*SC_k*SC_k/(k_infinity*k_infinity) );
+				SC_loc = exp( lSC0 + slope * ( log(abs(SC_k)) - log(abs(k_pts[0])) ) );
+				SC_loc = 0.0;	//for now
 			}
 			else if (SC_k > k_pts[n_k_pts-1])
 			{
 				double lSC0 = log(SC_vec[n_k_pts-2].real());
 				double lSC1 = log(SC_vec[n_k_pts-1].real());
 				double slope = (lSC1 - lSC0) / ( log(abs(k_pts[n_k_pts-1])) - log(abs(k_pts[n_k_pts-2])) );
-				SC_loc = exp(lSC0 + slope * ( log(abs(SC_k)) - log(abs(k_pts[n_k_pts-2])) ) - 0.0*SC_k*SC_k/(k_infinity*k_infinity) );
+				SC_loc = exp(lSC0 + slope * ( log(abs(SC_k)) - log(abs(k_pts[n_k_pts-2])) ) );
+				SC_loc = 0.0;	//for now
 			}
 			else
 			{
@@ -259,6 +304,7 @@ int main(int argc, char *argv[])
 			if (ixi == 0)
 				cerr << SC_k << "   " << SC_loc << endl;
 			SC_xi_sum += SC_k_wts[ik] * exp(i * SC_k * Delta_xi) * SC_loc;
+			//SC_xi_sum += SC_k_wts[ik] * cos(SC_k * Delta_xi) * SC_loc;
 		}
 		cout << Delta_xi << "   " << SC_xi_sum.real() << endl;
 	}

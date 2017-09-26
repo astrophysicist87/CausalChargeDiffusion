@@ -53,52 +53,6 @@ hbarC = 0.197327053
 def pause():
     programPause = raw_input("Press the <ENTER> key to continue...")
 
-#################################################################
-# Plot correlations
-def plotCorrelations():
-	# set-up
-	plotfontsize = 12
-	fig, ax = plt.subplots(1, 1)
-	fig.subplots_adjust(wspace=0.0, hspace=0.0) 
-	lw = 2.0
-	subtractSelfCorrelations=True
-
-	cm = plt.get_cmap('jet') 
-	cNorm  = colors.Normalize(vmin=0, vmax=len(filenames))
-	scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=cm)
-	
-	idx=0
-	for filename in filenames:
-		columnToPlot = 1
-		if subtractSelfCorrelations:
-			columnToPlot = 2
-		chosenCols = [0, 1, 3]
-		
-		colorVal = scalarMap.to_rgba(len(filenames)-idx-1)
-		#colorVal = scalarMap.to_rgba(idx)
-
-		# read in file
-		data = loadtxt(filename, usecols=tuple(chosenCols))
-
-		#print 'Loading data file...'
-		ax.plot(data[:,0], data[:,columnToPlot], color=colorVal, linestyle='-', linewidth=lw)
-		idx+=1
-	
-	
-	ax.axhline(0.0, color='black', linewidth=1)
-	
-	ax.set_xlabel(r'$\Delta y$', fontsize = labelsize + 10)
-	ax.set_ylabel(r'$B_{\pi\pi}$', fontsize = labelsize + 10)
-	#ax.legend(loc=0, ncol=1, prop={'size': plotfontsize+5})
-	#text(0.9, 0.15, r'(b)', horizontalalignment='center', verticalalignment='center', transform = ax.transAxes, size=30)
-	#plt.title(pathname)
-	
-	#plt.show(block=False)
-	plt.show()
-	#outfilename = os.path.splitext(filename)[0] + '.pdf'
-	#plt.savefig(outfilename, format='pdf', bbox_inches='tight')
-	#print 'Saved to', outfilename
-
 
 #################################################################
 # Plot two-particle correlation snapshots
@@ -137,16 +91,17 @@ def plotTwoPCSnapshots(particleLabel, noiseType, GreenType, vQ2, subtractSelfCor
 		data = loadtxt(filename, usecols=tuple(chosenCols))
 
 		#print 'Loading data file...'
-		ax.plot(data[:,0], data[:,columnToPlot], color=colorVal, linestyle='-', linewidth=lw, label=fraction)
+		ax.plot(data[:,0], data[:,columnToPlot], color=colorVal, linestyle='-', linewidth=lw, label=r'$f=$' + fraction.replace('_','.'))
 		idx+=1
 	
 	
 	ax.axhline(0.0, color='black', linewidth=1)
 	
 	ax.set_xlabel(r'$\Delta y$', fontsize = labelsize + 10)
-	ax.set_ylabel(r'$B_{\pi\pi}$', fontsize = labelsize + 10)
+	ax.set_ylabel(r'$B_{\pi\pi}(\tau = \tau_0 + f (\tau_f - \tau_0))$', fontsize = labelsize + 10)
 	ax.legend(loc=0, ncol=1, prop={'size': plotfontsize+5})
-	plt.title(noiseType + ' noise, ' + GreenType + ' Green function: subtractSC = ' + str(subtractSelfCorrelations))
+	plt.title(noiseType + ' noise, ' + GreenType + ' Green function')
+	text(0.8, 0.2, r'$v_Q^2 = %(vQ2)s$' % {'vQ2': vQ2.replace('_','.')}, horizontalalignment='center', verticalalignment='center', transform = ax.transAxes, size=30)
 	
 	#plt.show(block=False)
 	outfilename = resultsDir + 'twoPC_%(PL)s%(PL)s_vQ2_%(vQ2)s_snapshots' % {'PL': particleLabel, 'vQ2': vQ2} + SCstring + '.pdf'
@@ -157,7 +112,7 @@ def plotTwoPCSnapshots(particleLabel, noiseType, GreenType, vQ2, subtractSelfCor
 
 #################################################################
 # Plot snapshots
-def plotSnapshots(particleLabel, space, noiseType, GreenType, vQ2, subtractSelfCorrelations):
+def plotCorrelatorSnapshots(particleLabel, space, noiseType, GreenType, vQ2, subtractSelfCorrelations):
 	# set-up
 	plotfontsize = 12
 	fig, ax = plt.subplots(1, 1)
@@ -192,16 +147,22 @@ def plotSnapshots(particleLabel, space, noiseType, GreenType, vQ2, subtractSelfC
 		data = loadtxt(filename, usecols=tuple(chosenCols))
 
 		#print 'Loading data file...'
-		ax.plot(data[:,0], data[:,columnToPlot], color=colorVal, linestyle='-', linewidth=lw, label=fraction)
+		ax.plot(data[:,0], data[:,columnToPlot], color=colorVal, linestyle='-', linewidth=lw, label=r'$f=$' + fraction.replace('_','.'))
 		idx+=1
 	
 	
 	ax.axhline(0.0, color='black', linewidth=1)
 	
-	ax.set_xlabel(r'$k$', fontsize = labelsize + 10)
-	ax.set_ylabel(r'$\left< \delta \tilde n(k) \delta \tilde n(-k) \right>$', fontsize = labelsize + 10)
+	spaceXLabel = r'$k$'
+	spaceYLabel = r'$\left< \delta \tilde n(k) \delta \tilde n(-k) \right>$'
+	if space == 'Dxi':
+		spaceXLabel = r'$\Delta \xi$'
+		spaceYLabel = r'$\left< \delta \tilde n(\Delta \xi) \delta \tilde n(0) \right>$'
+	ax.set_xlabel(spaceXLabel, fontsize = labelsize + 10)
+	ax.set_ylabel(spaceYLabel, fontsize = labelsize + 10)
 	ax.legend(loc=0, ncol=1, prop={'size': plotfontsize+5})
-	plt.title(noiseType + ' noise, ' + GreenType + ' Green function: subtractSC = ' + str(subtractSelfCorrelations))
+	plt.title(noiseType + ' noise, ' + GreenType + ' Green function')
+	text(0.15, 0.9, r'$v_Q^2 = %(vQ2)s$' % {'vQ2': vQ2.replace('_','.')}, horizontalalignment='center', verticalalignment='center', transform = ax.transAxes, size=30)
 	
 	#plt.show(block=False)
 	outfilename = resultsDir + 'dndn_%(space)s_%(PL)s%(PL)s_vQ2_%(vQ2)s_snapshots' % {'PL': particleLabel, 'space': space, 'vQ2': vQ2} + SCstring + '.pdf'
@@ -248,20 +209,20 @@ def plotChosenvQ2s(fileStem, subtractSelfCorrelations, my_y_label, chosenCols):
 		data = loadtxt(filename, usecols=tuple(chosenCols))
 
 		#print 'Loading data file...'
-		ax.plot(data[:,0], data[:,columnToPlot], color=colorVal, linestyle='-', linewidth=lw, label=fraction)
+		ax.plot(data[:,0], data[:,columnToPlot], color=colorVal, linestyle='-', linewidth=lw, label=r'$v_Q^2 = $' + vQ2.replace('_','.'))
 		idx+=1
 	
 	
 	ax.axhline(0.0, color='black', linewidth=1)
 	
-	ax.set_xlabel(r'$k$', fontsize = labelsize + 10)
+	ax.set_xlabel(r'$\Delta \xi$', fontsize = labelsize + 10)
 	ax.set_ylabel(my_y_label, fontsize = labelsize + 10)
 	ax.legend(loc=0, ncol=1, prop={'size': plotfontsize+5})
-	plt.title(fileStem + ': vQ2 comparison, subtractSC = ' + str(subtractSelfCorrelations))
+	plt.title(fileStem + ': vQ2 comparison')
 	
-	plt.show(block=False)
-	outfilename = resultsDir + fileStem + '_vQ2_%(vQ2)s_snapshots' % {'vQ2': vQ2} + SCstring + '.pdf'
-	#plt.savefig(outfilename, format='pdf', bbox_inches='tight')
+	#plt.show(block=False)
+	outfilename = resultsDir + fileStem + '_vQ2_comparison_' + SCstring + '.pdf'
+	plt.savefig(outfilename, format='pdf', bbox_inches='tight')
 	print 'Saved to', outfilename
 
 
@@ -304,23 +265,37 @@ def plotSelfCorrelations():
 
 #################################################################
 def generate_all_plots():
-	#plotCorrelations()
 	#plotTwoPCSnapshots('pi', 'white', 'white', '100', True)	#vQ2 value irrelevant for pure white noise
+	#plotTwoPCSnapshots('pi', 'color', 'color', '1_000', True)
 	#plotTwoPCSnapshots('pi', 'color', 'color', '0_333', True)
 	#plotTwoPCSnapshots('pi', 'white', 'white', '100', False)	#vQ2 value irrelevant for pure white noise
 	#plotTwoPCSnapshots('pi', 'color', 'color', '0_333', False)
-	#plotSnapshots('pi', 'k', 'white', 'white', '100', True)	#vQ2 value irrelevant for pure white noise
-	#plotSnapshots('pi', 'k', 'color', 'color', '0_333', True)
-	#plotSnapshots('pi', 'k', 'white', 'white', '100', False)	#vQ2 value irrelevant for pure white noise
-	#plotSnapshots('pi', 'k', 'color', 'color', '0_333', False)
+	#plotTwoPCSnapshots('pi', 'color', 'color', '1_000', False)
+	#pause()
+	#plotCorrelatorSnapshots('pi', 'k', 'white', 'white', '100', True)	#vQ2 value irrelevant for pure white noise
+	#plotCorrelatorSnapshots('pi', 'k', 'color', 'color', '1_000', True)
+	#plotCorrelatorSnapshots('pi', 'k', 'color', 'color', '0_333', True)
+	#plotCorrelatorSnapshots('pi', 'k', 'white', 'white', '100', False)	#vQ2 value irrelevant for pure white noise
+	#plotCorrelatorSnapshots('pi', 'k', 'color', 'color', '1_000', False)
+	#plotCorrelatorSnapshots('pi', 'k', 'color', 'color', '0_333', False)
+	#plotCorrelatorSnapshots('pi', 'Dxi', 'white', 'white', '100', True)
+	#plotCorrelatorSnapshots('pi', 'Dxi', 'color', 'color', '1_000', True)
+	#plotCorrelatorSnapshots('pi', 'Dxi', 'color', 'color', '0_333', True)
+	#pause()
 	########
-	#fileStem = 'dndn_%(space)s_%(PL)s%(PL)s' % {'PL': 'pi', 'space': 'k'}
+	fileStem = 'dndn_%(space)s_%(PL)s%(PL)s' % {'PL': 'pi', 'space': 'k'}
+	plotChosenvQ2s(fileStem, True, r'$\left< \delta \tilde n(k) \delta \tilde n(-k) \right>$', [0, 1, 2])
+	#fileStem = 'dndn_%(space)s_%(PL)s%(PL)s' % {'PL': 'p', 'space': 'k'}
 	#plotChosenvQ2s(fileStem, True, r'$\left< \delta \tilde n(k) \delta \tilde n(-k) \right>$', [0, 1, 2])
+	#fileStem = 'dndn_%(space)s_%(PL)s%(PL)s' % {'PL': 'K', 'space': 'k'}
+	#plotChosenvQ2s(fileStem, True, r'$\left< \delta \tilde n(k) \delta \tilde n(-k) \right>$', [0, 1, 2])
+	#pause()
 	########
-	#fileStem = 'twoPC_%(PL)s%(PL)s' % {'PL': 'pi'}
-	#plotChosenvQ2s(fileStem, True, r'$B_{\pi\pi}$', [0, 1, 3])
+	plotChosenvQ2s('twoPC_%(PL)s%(PL)s' % {'PL': 'pi'}, True, r'$B_{\pi\pi}$', [0, 1, 3])
+	#plotChosenvQ2s('twoPC_%(PL)s%(PL)s' % {'PL': 'p'}, True, r'$B_{p\bar p}$', [0, 1, 3])
+	#plotChosenvQ2s('twoPC_%(PL)s%(PL)s' % {'PL': 'K'}, True, r'$B_{K\bar K}$', [0, 1, 3])
 	#################
-	plotSelfCorrelations()
+	#plotSelfCorrelations()
 	#pause()
 
 

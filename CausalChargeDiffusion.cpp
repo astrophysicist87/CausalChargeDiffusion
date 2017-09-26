@@ -19,14 +19,14 @@ using namespace std;
 int particle_to_study;
 
 bool print_dndn_k = true;
-//bool print_dndn_Dxi = true;
+bool print_dndn_Dxi = true;
 //white noise is default
 bool white_noise = true;
 bool white_Green = true;
 
 const double hbarC = 197.33;
 const double xi_infinity = 5.0;
-const double k_infinity = 20.0;
+const double k_infinity = 15.0;
 
 const int n_Dy = 51;
 double Delta_y_step = 0.1;
@@ -46,7 +46,7 @@ double A0, A2, A4, C0, B, mui, muf, xi0, xibar0, etaBYs, RD, sPERn, Nf, qD, si, 
 double a_at_tauf, vs2_at_tauf, vn2_at_tauf, vsigma2_at_tauf;
 
 const int n_xi_pts = 5000;
-const int n_k_pts = 100;	//# of k points should be even to avoid poles in 1F1, etc.!!!
+const int n_k_pts = 150;	//# of k points should be even to avoid poles in 1F1, etc.!!!
 const int n_tau_pts = 201;
 double * xi_pts_minf_inf, * xi_wts_minf_inf;
 double * k_pts, * k_wts;
@@ -265,12 +265,12 @@ int main(int argc, char *argv[])
 	string dndn_Dxi_filename = filename3;
 	if (print_dndn_k)
 		output_dndn_k.open(dndn_k_filename.c_str());
-	//if (print_dndn_Dxi)
-	//	output_dndn_Dxi.open(dndn_Dxi_filename.c_str());
+	if (print_dndn_Dxi)
+		output_dndn_Dxi.open(dndn_Dxi_filename.c_str());
 
 	for (int ik = 0; ik < n_k_pts; ++ik)
 	{
-		//cout << "ik = " << ik << "..." << endl;
+		cout << "ik = " << ik << "..." << endl;
 		double k = k_pts[ik];
 		current_ik = ik;
 		vector<complex<double> > results(3);
@@ -281,7 +281,6 @@ int main(int argc, char *argv[])
 		Ctnn_vec.push_back(results[0]);
 		Ctnn_no_SC_vec.push_back(results[1]);
 		SC_vec.push_back(results[2]);
-		SC_arr[ik] = SC_vec[ik].real();
 
 		if (print_dndn_k)
 			output_dndn_k << k << "   " << setprecision(15)
@@ -294,11 +293,10 @@ int main(int argc, char *argv[])
 	for (int iDy = 0; iDy < n_Dy; iDy++)
 	{
 		double Delta_y = (double)iDy * Delta_y_step;
-		//double Delta_xi = Delta_y;
+		double Delta_xi = Delta_y;
 
 		complex<double> sum(0,0), sum_no_SC(0,0);
-		//complex<double> sum_Dxi(0,0), sum_Dxi_no_SC(0,0), SC_Dxi(0,0);
-
+		complex<double> sum_Dxi(0,0), sum_Dxi_no_SC(0,0), SC_Dxi(0,0);
 		for (int ik = 0; ik < n_k_pts; ++ik)
 		{
 			double k = k_pts[ik];
@@ -313,16 +311,17 @@ int main(int argc, char *argv[])
 			sum_no_SC += k_wts[ik] * exp(i * k * Delta_y)
 					* ( Ftn1 * conj(Ftn2) * Ctnn_no_SC );
 
-			//sum_Dxi += k_wts[ik] * exp(i * k * Delta_xi) * Ctnn;
-			//sum_Dxi_no_SC += k_wts[ik] * exp(i * k * Delta_xi) * Ctnn_no_SC;
+			sum_Dxi += k_wts[ik] * exp(i * k * Delta_xi) * Ctnn;
+			sum_Dxi_no_SC += k_wts[ik] * exp(i * k * Delta_xi) * Ctnn_no_SC;
+			SC_Dxi += k_wts[ik] * exp(i * k * Delta_xi) * SC_vec[ik];
 		}
 
 		//omit smearing function factors to just F.T. back to xi-space
-		/*if (print_dndn_Dxi)
+		if (print_dndn_Dxi)
 			output_dndn_Dxi << Delta_xi << "   " << setprecision(15)
 							<< sum_Dxi.real() << "   "
 							<< sum_Dxi_no_SC.real() << "   "
-							<< SC_Dxi.real() << endl;*/
+							<< SC_Dxi.real() << endl;
 
 		complex<double> result = (ds*tauf*Tf / (4.0*M_PI*M_PI * norm)) * sum;
 		complex<double> result_no_SC = (ds*tauf*Tf / (4.0*M_PI*M_PI * norm)) * sum_no_SC;
@@ -335,8 +334,8 @@ int main(int argc, char *argv[])
 
 	if (print_dndn_k)
 		output_dndn_k.close();
-	//if (print_dndn_Dxi)
-	//	output_dndn_Dxi.close();
+	if (print_dndn_Dxi)
+		output_dndn_Dxi.close();
 	output_results.close();
 
 	return 0;

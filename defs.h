@@ -430,7 +430,7 @@ inline complex<double> Gtilde_n_color(double k, double tau, double taup)
 			&& 2.0*abs(n1-n2)/( abs(n1)+abs(n2) ) < 1.e-10 )
 	{
 		//if (0.25 - vQ2*k*k > 0.0)
-		if (vQ2*k*k < 50.0)	//play with exactly which point to turn on pure white noise approximation
+		if (vQ2*k*k < 1.0)	//play with exactly which point to turn on pure white noise approximation
 		{
 			result = exp(DQ * k * k * ((1.0/tau) - (1.0/taup)) );
 		}
