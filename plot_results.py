@@ -34,12 +34,8 @@ CBFIndices = ['\pi\pi','p \\bar{p}','K K']
 particleLabels = ['pi','p','K']
 #ExpDataFilenames = ['star_pK.dat']
 #ExpDataFilenames = ['star_pipi.dat', 'star_ppbar.dat', 'star_KK.dat']
-vQ2Labels = ['0_100', '0_250', '0_333', '0_500', '0_750', '1_000', '2_000', '5_000', '10_000', '100_000']
-#snapshotLabels = ['0_05', '0_10', '0_15', '0_20', '0_25', '0_30', \
-#                    '0_35', '0_40', '0_45', '0_50', '0_55', '0_60', \
-#                    '0_65', '0_70', '0_75', '0_80', '0_85', '0_90', '0_95', '1_00']
-#snapshotLabels = ['0_05', '0_10', '0_15', '0_20', '0_25', '0_30', '0_35', '0_40', '0_45', '0_50']
-snapshotLabels = ['0_05', '0_10', '0_15', '0_20', '0_25', '0_50', '0_75', '1_00']
+vQ2Labels = ['0_333', '1_000', '10_000', '100_000']
+snapshotLabels = ['0_05', '0_10', '0_15', '0_25', '0_50', '1_00']
 
 #lineColors = ['red', 'blue', 'green', 'purple', 'orange', 'cyan']
 #plotTitles = ['Lattice', r'$2\pi D_Q T = 0.5$', r'$2\pi D_Q T = 1.0$', r'$2\pi D_Q T = 1.5$']
@@ -265,22 +261,25 @@ def plotSelfCorrelations():
 
 #################################################################
 def generate_all_plots():
-	#plotTwoPCSnapshots('pi', 'white', 'white', '100', True)	#vQ2 value irrelevant for pure white noise
-	#plotTwoPCSnapshots('pi', 'color', 'color', '1_000', True)
-	#plotTwoPCSnapshots('pi', 'color', 'color', '0_333', True)
+	plotTwoPCSnapshots('pi', 'white', 'white', '100', True)	#vQ2 value irrelevant for pure white noise
+	plotTwoPCSnapshots('pi', 'color', 'color', '10_000', True)
+	plotTwoPCSnapshots('pi', 'color', 'color', '1_000', True)
+	plotTwoPCSnapshots('pi', 'color', 'color', '0_333', True)
 	#plotTwoPCSnapshots('pi', 'white', 'white', '100', False)	#vQ2 value irrelevant for pure white noise
 	#plotTwoPCSnapshots('pi', 'color', 'color', '0_333', False)
 	#plotTwoPCSnapshots('pi', 'color', 'color', '1_000', False)
 	#pause()
-	#plotCorrelatorSnapshots('pi', 'k', 'white', 'white', '100', True)	#vQ2 value irrelevant for pure white noise
-	#plotCorrelatorSnapshots('pi', 'k', 'color', 'color', '1_000', True)
-	#plotCorrelatorSnapshots('pi', 'k', 'color', 'color', '0_333', True)
+	plotCorrelatorSnapshots('pi', 'k', 'white', 'white', '100', True)	#vQ2 value irrelevant for pure white noise
+	plotCorrelatorSnapshots('pi', 'k', 'color', 'color', '10_000', True)
+	plotCorrelatorSnapshots('pi', 'k', 'color', 'color', '1_000', True)
+	plotCorrelatorSnapshots('pi', 'k', 'color', 'color', '0_333', True)
 	#plotCorrelatorSnapshots('pi', 'k', 'white', 'white', '100', False)	#vQ2 value irrelevant for pure white noise
 	#plotCorrelatorSnapshots('pi', 'k', 'color', 'color', '1_000', False)
 	#plotCorrelatorSnapshots('pi', 'k', 'color', 'color', '0_333', False)
-	#plotCorrelatorSnapshots('pi', 'Dxi', 'white', 'white', '100', True)
-	#plotCorrelatorSnapshots('pi', 'Dxi', 'color', 'color', '1_000', True)
-	#plotCorrelatorSnapshots('pi', 'Dxi', 'color', 'color', '0_333', True)
+	plotCorrelatorSnapshots('pi', 'Dxi', 'white', 'white', '100', True)
+	plotCorrelatorSnapshots('pi', 'Dxi', 'color', 'color', '10_000', True)
+	plotCorrelatorSnapshots('pi', 'Dxi', 'color', 'color', '1_000', True)
+	plotCorrelatorSnapshots('pi', 'Dxi', 'color', 'color', '0_333', True)
 	#pause()
 	########
 	fileStem = 'dndn_%(space)s_%(PL)s%(PL)s' % {'PL': 'pi', 'space': 'k'}

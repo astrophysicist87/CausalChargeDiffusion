@@ -259,11 +259,17 @@ int main(int argc, char *argv[])
 							<< results[2].real() << endl;
 	}
 
-	complex<double> Ctnn_no_SC_sum = 0.0;
-	for (int ik = 0; ik < n_k_pts; ++ik)
+	for (int ixi = 0; ixi < 5001; ++ixi)
 	{
-		cout << k_pts[ik] << "   " << (Ctnn_no_SC_vec[ik]-Ctnn_no_SC_vec[0]).real() << endl;
-		Ctnn_no_SC_sum += k_wts[ik] * exp(i * k_pts[ik] * Delta_xi) * SC_loc;
+		double Delta_xi = -0.1 + (double)ixi * 0.00004;
+		double Ctnn_no_SC_sum = 0.0;
+		for (int ik = 0; ik < n_k_pts; ++ik)
+		{
+			if (ixi == 0)
+				cerr << k_pts[ik] << "   " << (Ctnn_no_SC_vec[ik]-Ctnn_no_SC_vec[n_k_pts-1]).real() << endl;
+			Ctnn_no_SC_sum += k_wts[ik] * 2.0 * cos(k_pts[ik] * Delta_xi) * (Ctnn_no_SC_vec[ik]-Ctnn_no_SC_vec[0]).real();
+		}
+		cout << Delta_xi << "   " << Ctnn_no_SC_sum << endl;
 	}
 if (1) exit (0);
 	

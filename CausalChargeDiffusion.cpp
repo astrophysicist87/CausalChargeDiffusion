@@ -26,10 +26,11 @@ bool white_Green = true;
 
 const double hbarC = 197.33;
 const double xi_infinity = 5.0;
-const double k_infinity = 15.0;
+const double k_infinity = 50.0;
 
-const int n_Dy = 51;
-double Delta_y_step = 0.1;
+const int n_Dy = 5001;
+const double Delta_y_max = 5.0;
+double Delta_y_step = Delta_y_max / double(n_Dy - 1);
 
 const double DQ = 0.162035;	//fm (rough estimate!)
 double vQ2, tauQ;
@@ -46,7 +47,7 @@ double A0, A2, A4, C0, B, mui, muf, xi0, xibar0, etaBYs, RD, sPERn, Nf, qD, si, 
 double a_at_tauf, vs2_at_tauf, vn2_at_tauf, vsigma2_at_tauf;
 
 const int n_xi_pts = 5000;
-const int n_k_pts = 150;	//# of k points should be even to avoid poles in 1F1, etc.!!!
+const int n_k_pts = 100;	//# of k points should be even to avoid poles in 1F1, etc.!!!
 const int n_tau_pts = 201;
 double * xi_pts_minf_inf, * xi_wts_minf_inf;
 double * k_pts, * k_wts;
@@ -178,9 +179,8 @@ int main(int argc, char *argv[])
     k_wts = new double [n_k_pts];
 
     int tmp = gauss_quadrature(n_xi_pts, 1, 0.0, 0.0, -xi_infinity, xi_infinity, xi_pts_minf_inf, xi_wts_minf_inf);
-    tmp = gauss_quadrature(n_k_pts, 1, 0.0, 0.0, -k_infinity, k_infinity, k_pts, k_wts);
-	double inverse_smearing_width = 1.0;
-    //tmp = gauss_quadrature(n_k_pts, 6, 0.0, 0.0, 0.0, inverse_smearing_width, k_pts, k_wts);
+    //tmp = gauss_quadrature(n_k_pts, 1, 0.0, 0.0, -k_infinity, k_infinity, k_pts, k_wts);
+    tmp = gauss_quadrature(n_k_pts, 1, 0.0, 0.0, 0.0, k_infinity, k_pts, k_wts);
     tmp = gauss_quadrature(n_tau_pts, 1, 0.0, 0.0, taui, tauf, tau_pts, tau_wts);
 
 	T_pts = new double [n_tau_pts];
@@ -306,14 +306,21 @@ int main(int argc, char *argv[])
 			complex<double> Ctnn = Ctnn_vec[ik];
 			complex<double> Ctnn_no_SC = Ctnn_no_SC_vec[ik];
 
-			sum += k_wts[ik] * exp(i * k * Delta_y)
+			//sum += k_wts[ik] * exp(i * k * Delta_y)
+			//		* ( Ftn1 * conj(Ftn2) * Ctnn );
+			//sum_no_SC += k_wts[ik] * exp(i * k * Delta_y)
+			//		* ( Ftn1 * conj(Ftn2) * Ctnn_no_SC );
+			sum += 2.0 * k_wts[ik] * cos(k * Delta_y)
 					* ( Ftn1 * conj(Ftn2) * Ctnn );
-			sum_no_SC += k_wts[ik] * exp(i * k * Delta_y)
+			sum_no_SC += 2.0 * k_wts[ik] * cos(k * Delta_y)
 					* ( Ftn1 * conj(Ftn2) * Ctnn_no_SC );
 
-			sum_Dxi += k_wts[ik] * exp(i * k * Delta_xi) * Ctnn;
-			sum_Dxi_no_SC += k_wts[ik] * exp(i * k * Delta_xi) * Ctnn_no_SC;
-			SC_Dxi += k_wts[ik] * exp(i * k * Delta_xi) * SC_vec[ik];
+			//sum_Dxi += k_wts[ik] * exp(i * k * Delta_xi) * Ctnn;
+			//sum_Dxi_no_SC += k_wts[ik] * exp(i * k * Delta_xi) * Ctnn_no_SC;
+			//SC_Dxi += k_wts[ik] * exp(i * k * Delta_xi) * SC_vec[ik];
+			sum_Dxi += 2.0 * k_wts[ik] * cos(k * Delta_xi) * Ctnn;
+			sum_Dxi_no_SC += 2.0 * k_wts[ik] * cos(k * Delta_xi) * Ctnn_no_SC;
+			SC_Dxi += 2.0 * k_wts[ik] * cos(k * Delta_xi) * SC_vec[ik];
 		}
 
 		//omit smearing function factors to just F.T. back to xi-space
