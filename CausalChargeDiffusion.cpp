@@ -19,14 +19,14 @@ using namespace std;
 int particle_to_study;
 
 bool print_dndn_k = true;
-bool print_dndn_Dxi = true;
+bool print_dndn_Dxi = false;
 //white noise is default
 bool white_noise = true;
 bool white_Green = true;
 
 const double hbarC = 197.33;
 const double xi_infinity = 5.0;
-const double k_infinity = 50.0;
+const double k_infinity = 15.0;
 
 const int n_Dy = 5001;
 const double Delta_y_max = 5.0;
@@ -48,7 +48,7 @@ double a_at_tauf, vs2_at_tauf, vn2_at_tauf, vsigma2_at_tauf;
 
 const int n_xi_pts = 5000;
 const int n_k_pts = 100;	//# of k points should be even to avoid poles in 1F1, etc.!!!
-const int n_tau_pts = 201;
+const int n_tau_pts = 401;
 double * xi_pts_minf_inf, * xi_wts_minf_inf;
 double * k_pts, * k_wts;
 double * tau_pts, * tau_wts;
@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
 	//fixing Tf explicitly instead of
 	//calculating it from P=0 curve
 	Tf = 150.0 / hbarC;
-	//Tf = 106.4226 / hbarC;
+	//Tf = 106.4226 / hbarC;	//old FO temperature, for comparison
 
 	sf = s_vs_T(Tf);
 	tauf = si * taui / sf;

@@ -28,7 +28,7 @@ bool white_Green = true;
 
 const double hbarC = 197.33;
 const double xi_infinity = 5.0;
-const double k_infinity = 100.0;
+const double k_infinity = 500.0;
 
 const int n_Dy = 51;
 double Delta_y_step = 0.1;
@@ -48,8 +48,8 @@ double A0, A2, A4, C0, B, mui, muf, xi0, xibar0, etaBYs, RD, sPERn, Nf, qD, si, 
 double a_at_tauf, vs2_at_tauf, vn2_at_tauf, vsigma2_at_tauf;
 
 const int n_xi_pts = 5000;
-const int n_k_pts = 100;	//# of k points should be even to avoid poles in 1F1, etc.!!!
-const int n_tau_pts = 401;
+const int n_k_pts = 200;	//# of k points should be even to avoid poles in 1F1, etc.!!!
+const int n_tau_pts = 501;
 double * xi_pts_minf_inf, * xi_wts_minf_inf;
 double * k_pts, * k_wts;
 double * tau_pts, * tau_wts;
@@ -165,7 +165,8 @@ int main(int argc, char *argv[])
 
     int tmp = gauss_quadrature(n_xi_pts, 1, 0.0, 0.0, -xi_infinity, xi_infinity, xi_pts_minf_inf, xi_wts_minf_inf);
     //tmp = gauss_quadrature(n_k_pts, 6, 0.0, 0.0, 0.0, 0.0005/vQ2, k_pts, k_wts);
-    tmp = gauss_quadrature(n_k_pts, 5, 0.0, 0.0, 0.0, 0.25/vQ2, k_pts, k_wts);
+    //tmp = gauss_quadrature(n_k_pts, 5, 0.0, 0.0, 0.0, 0.5/vQ2, k_pts, k_wts);
+    tmp = gauss_quadrature(n_k_pts, 1, 0.0, 0.0, 0.0, k_infinity, k_pts, k_wts);
 	double inverse_smearing_width = 1.0;
     tmp = gauss_quadrature(n_tau_pts, 1, 0.0, 0.0, taui, tauf, tau_pts, tau_wts);
 
@@ -237,6 +238,8 @@ int main(int argc, char *argv[])
 	if (print_dndn_Dxi)
 		output_dndn_Dxi.open(dndn_Dxi_filename.c_str());
 
+	double Ctnn_shift = 0.0;
+	//double counter = 1.0;
 	for (int ik = 0; ik < n_k_pts; ++ik)
 	{
 		//cout << "ik = " << ik << "..." << endl;
@@ -257,22 +260,64 @@ int main(int argc, char *argv[])
 							<< results[0].real() << "   "
 							<< results[1].real() << "   "
 							<< results[2].real() << endl;
+
+		double k_cutoff = 250.0;
+		if ( abs(k_pts[ik]) >= k_cutoff )
+		{
+			//try to get average after curve has asymptoted...
+			Ctnn_shift += k_wts[ik] * Ctnn_no_SC_vec[ik].real() / (k_infinity-k_cutoff);
+			//counter += 1.0;
+		}
 	}
+	//Ctnn_shift /= counter;
 
 	for (int ixi = 0; ixi < 5001; ++ixi)
 	{
-		double Delta_xi = -0.1 + (double)ixi * 0.00004;
+		double Delta_xi = -0.5 + (double)ixi * 1.0/5000.0;
 		double Ctnn_no_SC_sum = 0.0;
 		for (int ik = 0; ik < n_k_pts; ++ik)
 		{
 			if (ixi == 0)
-				cerr << k_pts[ik] << "   " << (Ctnn_no_SC_vec[ik]-Ctnn_no_SC_vec[n_k_pts-1]).real() << endl;
-			Ctnn_no_SC_sum += k_wts[ik] * 2.0 * cos(k_pts[ik] * Delta_xi) * (Ctnn_no_SC_vec[ik]-Ctnn_no_SC_vec[0]).real();
+				cerr << k_pts[ik] << "   " << (Ctnn_no_SC_vec[ik]-Ctnn_shift).real() << "   " << Ctnn_no_SC_vec[ik].real() << "   " << Ctnn_shift << endl;
+			Ctnn_no_SC_sum += k_wts[ik] * 2.0 * cos(k_pts[ik] * Delta_xi) * (Ctnn_no_SC_vec[ik]-Ctnn_shift).real();
 		}
 		cout << Delta_xi << "   " << Ctnn_no_SC_sum << endl;
 	}
 if (1) exit (0);
 	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	//convert self-correlations to Delta_xi space
 	const int n_SC_k_pts = 5000;
 	double * SC_k_pts = new double [n_SC_k_pts];
@@ -282,7 +327,7 @@ if (1) exit (0);
 	for (int ixi = 0; ixi < 5001; ++ixi)
 	{
 		complex<double> SC_xi_sum = 0.0;
-		double Delta_xi = -0.1 + (double)ixi * 0.00004;
+		double Delta_xi = -0.25 + (double)ixi * 0.0001;
 		for (int ik = 0; ik < n_SC_k_pts; ++ik)
 		{
 			double SC_k = SC_k_pts[ik];

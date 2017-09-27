@@ -217,7 +217,7 @@ def plotChosenvQ2s(fileStem, subtractSelfCorrelations, my_y_label, chosenCols):
 	plt.title(fileStem + ': vQ2 comparison')
 	
 	#plt.show(block=False)
-	outfilename = resultsDir + fileStem + '_vQ2_comparison_' + SCstring + '.pdf'
+	outfilename = resultsDir + fileStem + '_vQ2_comparison' + SCstring + '.pdf'
 	plt.savefig(outfilename, format='pdf', bbox_inches='tight')
 	print 'Saved to', outfilename
 
@@ -276,6 +276,7 @@ def generate_all_plots():
 	#plotCorrelatorSnapshots('pi', 'k', 'white', 'white', '100', False)	#vQ2 value irrelevant for pure white noise
 	#plotCorrelatorSnapshots('pi', 'k', 'color', 'color', '1_000', False)
 	#plotCorrelatorSnapshots('pi', 'k', 'color', 'color', '0_333', False)
+	resultsDir='./'
 	plotCorrelatorSnapshots('pi', 'Dxi', 'white', 'white', '100', True)
 	plotCorrelatorSnapshots('pi', 'Dxi', 'color', 'color', '10_000', True)
 	plotCorrelatorSnapshots('pi', 'Dxi', 'color', 'color', '1_000', True)

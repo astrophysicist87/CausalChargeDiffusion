@@ -5,7 +5,7 @@ echo Started everything at `date`
 echo '************************************************'
 echo
 
-#make clean && make
+make clean && make
 
 #set up results directory
 resultsDir="results"
@@ -22,7 +22,7 @@ do
 	./run_CCD 1 1 100 $resultsDir $frac &
 done
 
-wait
+#wait
 
 #get snapshots for pions, colored noise
 for frac in 0.05 0.10 0.15 0.25 0.50 1.00
@@ -40,7 +40,7 @@ do
 	./run_CCD 1 1 1 $resultsDir $frac &
 done
 
-wait
+#wait
 
 #get snapshots for pions, colored noise
 for frac in 0.05 0.10 0.15 0.25 0.50 1.00
