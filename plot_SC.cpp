@@ -28,7 +28,7 @@ bool white_Green = true;
 
 const double hbarC = 197.33;
 const double xi_infinity = 5.0;
-const double k_infinity = 500.0;
+const double k_infinity = 2000.0;
 
 const int n_Dy = 51;
 double Delta_y_step = 0.1;
@@ -48,8 +48,8 @@ double A0, A2, A4, C0, B, mui, muf, xi0, xibar0, etaBYs, RD, sPERn, Nf, qD, si, 
 double a_at_tauf, vs2_at_tauf, vn2_at_tauf, vsigma2_at_tauf;
 
 const int n_xi_pts = 5000;
-const int n_k_pts = 200;	//# of k points should be even to avoid poles in 1F1, etc.!!!
-const int n_tau_pts = 501;
+const int n_k_pts = 500;	//# of k points should be even to avoid poles in 1F1, etc.!!!
+const int n_tau_pts = 1001;
 double * xi_pts_minf_inf, * xi_wts_minf_inf;
 double * k_pts, * k_wts;
 double * tau_pts, * tau_wts;
@@ -239,7 +239,6 @@ int main(int argc, char *argv[])
 		output_dndn_Dxi.open(dndn_Dxi_filename.c_str());
 
 	double Ctnn_shift = 0.0;
-	//double counter = 1.0;
 	for (int ik = 0; ik < n_k_pts; ++ik)
 	{
 		//cout << "ik = " << ik << "..." << endl;
@@ -266,100 +265,75 @@ int main(int argc, char *argv[])
 		{
 			//try to get average after curve has asymptoted...
 			Ctnn_shift += k_wts[ik] * Ctnn_no_SC_vec[ik].real() / (k_infinity-k_cutoff);
-			//counter += 1.0;
 		}
 	}
-	//Ctnn_shift /= counter;
 
-	for (int ixi = 0; ixi < 5001; ++ixi)
+	bool dndn_Dxi_mode = true;
+	bool SC_Dxi_mode = !dndn_Dxi_mode;	//do one or the other
+
+	if (dndn_Dxi_mode)
 	{
-		double Delta_xi = -0.5 + (double)ixi * 1.0/5000.0;
-		double Ctnn_no_SC_sum = 0.0;
-		for (int ik = 0; ik < n_k_pts; ++ik)
+		for (int ixi = 0; ixi < 5001; ++ixi)
 		{
-			if (ixi == 0)
-				cerr << k_pts[ik] << "   " << (Ctnn_no_SC_vec[ik]-Ctnn_shift).real() << "   " << Ctnn_no_SC_vec[ik].real() << "   " << Ctnn_shift << endl;
-			Ctnn_no_SC_sum += k_wts[ik] * 2.0 * cos(k_pts[ik] * Delta_xi) * (Ctnn_no_SC_vec[ik]-Ctnn_shift).real();
+			double Delta_xi = -1.0 + (double)ixi * 2.0/5000.0;
+			double Ctnn_no_SC_sum = 0.0;
+			for (int ik = 0; ik < n_k_pts; ++ik)
+			{
+				if (ixi == 0)
+					cerr << k_pts[ik] << "   " << (Ctnn_no_SC_vec[ik]-Ctnn_shift).real() << "   " << Ctnn_no_SC_vec[ik].real() << "   " << Ctnn_shift << "   " << Ctnn_vec[ik].real() << "   " << SC_vec[ik].real() << endl;
+				Ctnn_no_SC_sum += k_wts[ik] * 2.0 * cos(k_pts[ik] * Delta_xi) * (Ctnn_no_SC_vec[ik]-Ctnn_shift).real();
+			}
+			cout << Delta_xi << "   " << Ctnn_no_SC_sum << endl;
 		}
-		cout << Delta_xi << "   " << Ctnn_no_SC_sum << endl;
+		if (1) exit (0);
 	}
-if (1) exit (0);
 	
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	//convert self-correlations to Delta_xi space
-	const int n_SC_k_pts = 5000;
-	double * SC_k_pts = new double [n_SC_k_pts];
-	double * SC_k_wts = new double [n_SC_k_pts];
-	tmp = gauss_quadrature(n_SC_k_pts, 6, 0.0, 0.0, 0.0, 0.005/vQ2, SC_k_pts, SC_k_wts);
-	//tmp = gauss_quadrature(n_SC_k_pts, 5, 0.0, 0.0, 0.0, 0.005/vQ2/sqrt(vQ2), SC_k_pts, SC_k_wts);
-	for (int ixi = 0; ixi < 5001; ++ixi)
+	if (SC_Dxi_mode)
 	{
-		complex<double> SC_xi_sum = 0.0;
-		double Delta_xi = -0.25 + (double)ixi * 0.0001;
-		for (int ik = 0; ik < n_SC_k_pts; ++ik)
+		//convert self-correlations to Delta_xi space
+		const int n_SC_k_pts = 5000;
+		double * SC_k_pts = new double [n_SC_k_pts];
+		double * SC_k_wts = new double [n_SC_k_pts];
+		//tmp = gauss_quadrature(n_SC_k_pts, 6, 0.0, 0.0, 0.0, 0.005/vQ2, SC_k_pts, SC_k_wts);
+		//tmp = gauss_quadrature(n_SC_k_pts, 5, 0.0, 0.0, 0.0, 0.5/vQ2, SC_k_pts, SC_k_wts);
+		tmp = gauss_quadrature(n_k_pts, 1, 0.0, 0.0, 0.0, k_infinity, SC_k_pts, SC_k_wts);
+		for (int ixi = 0; ixi < 5001; ++ixi)
 		{
-			double SC_k = SC_k_pts[ik];
-			double SC_loc = 0.0;
-			if (SC_k < k_pts[0])
+			complex<double> SC_xi_sum = 0.0;
+			double Delta_xi = -0.25 + (double)ixi * 0.0001;
+			for (int ik = 0; ik < n_SC_k_pts; ++ik)
 			{
-				double lSC0 = log(SC_vec[0].real());
-				double lSC1 = log(SC_vec[1].real());
-				double slope = (lSC1 - lSC0) / ( log(abs(k_pts[1])) - log(abs(k_pts[0])) );
-				SC_loc = exp( lSC0 + slope * ( log(abs(SC_k)) - log(abs(k_pts[0])) ) );
-				SC_loc = 0.0;	//for now
+				double SC_k = SC_k_pts[ik];
+				double SC_loc = 0.0;
+				if (SC_k < k_pts[0])
+				{
+					double lSC0 = log(SC_vec[0].real());
+					double lSC1 = log(SC_vec[1].real());
+					double slope = (lSC1 - lSC0) / ( log(abs(k_pts[1])) - log(abs(k_pts[0])) );
+					SC_loc = exp( lSC0 + slope * ( log(abs(SC_k)) - log(abs(k_pts[0])) ) );
+					SC_loc = 0.0;	//for now
+				}
+				else if (SC_k > k_pts[n_k_pts-1])
+				{
+					double lSC0 = log(SC_vec[n_k_pts-2].real());
+					double lSC1 = log(SC_vec[n_k_pts-1].real());
+					double slope = (lSC1 - lSC0) / ( log(abs(k_pts[n_k_pts-1])) - log(abs(k_pts[n_k_pts-2])) );
+					SC_loc = exp(lSC0 + slope * ( log(abs(SC_k)) - log(abs(k_pts[n_k_pts-2])) ) );
+					SC_loc = 0.0;	//for now
+				}
+				else
+				{
+					SC_loc = interpolate1D(k_pts, SC_arr, SC_k, n_k_pts, 1, false);
+				}
+				if (ixi == 0)
+					cerr << SC_k << "   " << SC_loc << endl;
+				//SC_xi_sum += SC_k_wts[ik] * exp(i * SC_k * Delta_xi) * SC_loc;
+				SC_xi_sum += SC_k_wts[ik] * 2.0 * cos(SC_k * Delta_xi) * SC_loc;
 			}
-			else if (SC_k > k_pts[n_k_pts-1])
-			{
-				double lSC0 = log(SC_vec[n_k_pts-2].real());
-				double lSC1 = log(SC_vec[n_k_pts-1].real());
-				double slope = (lSC1 - lSC0) / ( log(abs(k_pts[n_k_pts-1])) - log(abs(k_pts[n_k_pts-2])) );
-				SC_loc = exp(lSC0 + slope * ( log(abs(SC_k)) - log(abs(k_pts[n_k_pts-2])) ) );
-				SC_loc = 0.0;	//for now
-			}
-			else
-			{
-				SC_loc = interpolate1D(k_pts, SC_arr, SC_k, n_k_pts, 1, false);
-			}
-			if (ixi == 0)
-				cerr << SC_k << "   " << SC_loc << endl;
-			SC_xi_sum += SC_k_wts[ik] * exp(i * SC_k * Delta_xi) * SC_loc;
-			//SC_xi_sum += SC_k_wts[ik] * cos(SC_k * Delta_xi) * SC_loc;
+			cout << Delta_xi << "   " << SC_xi_sum.real() << endl;
 		}
-		cout << Delta_xi << "   " << SC_xi_sum.real() << endl;
 	}
-	
 
 	/*
 	//convert self-correlations to Delta_xi space

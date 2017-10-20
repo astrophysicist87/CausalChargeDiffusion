@@ -2,7 +2,7 @@
 
 from numpy import *
 #from numpy.core import numeric as _nx
-from pylab import *
+#from pylab import *
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
@@ -70,8 +70,10 @@ def plotTwoPCSnapshots(particleLabel, noiseType, GreenType, vQ2, subtractSelfCor
 	for fraction in snapshotLabels:
 		if noiseType=='white' and GreenType=='white':
 			filename = twoPC_white_filenames % {'PL': particleLabel, 'frac': fraction}
+			plotLabel = 'white'
 		else:
 			filename = twoPC_color_filenames % {'PL': particleLabel, 'NT': noiseType, 'GT': GreenType, 'vQ2': vQ2, 'frac': fraction}
+			plotLabel = r'$v_Q^2 = %(vQ2)s$' % {'vQ2': vQ2.replace('_','.')}
 		
 		columnToPlot = 1
 		SCstring = '_withSC'
@@ -96,8 +98,8 @@ def plotTwoPCSnapshots(particleLabel, noiseType, GreenType, vQ2, subtractSelfCor
 	ax.set_xlabel(r'$\Delta y$', fontsize = labelsize + 10)
 	ax.set_ylabel(r'$B_{\pi\pi}(\tau = \tau_0 + f (\tau_f - \tau_0))$', fontsize = labelsize + 10)
 	ax.legend(loc=0, ncol=1, prop={'size': plotfontsize+5})
-	plt.title(noiseType + ' noise, ' + GreenType + ' Green function')
-	text(0.8, 0.2, r'$v_Q^2 = %(vQ2)s$' % {'vQ2': vQ2.replace('_','.')}, horizontalalignment='center', verticalalignment='center', transform = ax.transAxes, size=30)
+	#plt.title(noiseType + ' noise, ' + GreenType + ' Green function')
+	text(0.8, 0.2, plotLabel, horizontalalignment='center', verticalalignment='center', transform = ax.transAxes, size=30)
 	
 	#plt.show(block=False)
 	outfilename = resultsDir + 'twoPC_%(PL)s%(PL)s_vQ2_%(vQ2)s_snapshots' % {'PL': particleLabel, 'vQ2': vQ2} + SCstring + '.pdf'
@@ -126,8 +128,10 @@ def plotCorrelatorSnapshots(particleLabel, space, noiseType, GreenType, vQ2, sub
 	for fraction in snapshotLabels:
 		if noiseType=='white' and GreenType=='white':
 			filename = dndn_white_filenames % {'PL': particleLabel, 'space': space, 'frac': fraction}
+			plotLabel = 'White'
 		else:
 			filename = dndn_color_filenames % {'PL': particleLabel, 'space': space, 'NT': noiseType, 'GT': GreenType, 'vQ2': vQ2, 'frac': fraction}
+			plotLabel = r'$v_Q^2 = %(vQ2)s$' % {'vQ2': vQ2.replace('_','.')}
 		
 		columnToPlot = 1
 		SCstring = '_withSC'
@@ -140,6 +144,7 @@ def plotCorrelatorSnapshots(particleLabel, space, noiseType, GreenType, vQ2, sub
 		#colorVal = scalarMap.to_rgba(idx)
 
 		# read in file
+		#print filename
 		data = loadtxt(filename, usecols=tuple(chosenCols))
 
 		#print 'Loading data file...'
@@ -153,12 +158,12 @@ def plotCorrelatorSnapshots(particleLabel, space, noiseType, GreenType, vQ2, sub
 	spaceYLabel = r'$\left< \delta \tilde n(k) \delta \tilde n(-k) \right>$'
 	if space == 'Dxi':
 		spaceXLabel = r'$\Delta \xi$'
-		spaceYLabel = r'$\left< \delta \tilde n(\Delta \xi) \delta \tilde n(0) \right>$'
+		spaceYLabel = r'$\left< \delta n(\Delta \xi) \delta n(0) \right>$'
 	ax.set_xlabel(spaceXLabel, fontsize = labelsize + 10)
 	ax.set_ylabel(spaceYLabel, fontsize = labelsize + 10)
-	ax.legend(loc=0, ncol=1, prop={'size': plotfontsize+5})
-	plt.title(noiseType + ' noise, ' + GreenType + ' Green function')
-	text(0.15, 0.9, r'$v_Q^2 = %(vQ2)s$' % {'vQ2': vQ2.replace('_','.')}, horizontalalignment='center', verticalalignment='center', transform = ax.transAxes, size=30)
+	#ax.legend(loc=0, ncol=1, prop={'size': plotfontsize+5})
+	#plt.title(noiseType + ' noise, ' + GreenType + ' Green function')
+	text(0.5, 0.9, plotLabel, horizontalalignment='center', verticalalignment='center', transform = ax.transAxes, size=30)
 	
 	#plt.show(block=False)
 	outfilename = resultsDir + 'dndn_%(space)s_%(PL)s%(PL)s_vQ2_%(vQ2)s_snapshots' % {'PL': particleLabel, 'space': space, 'vQ2': vQ2} + SCstring + '.pdf'
@@ -214,7 +219,7 @@ def plotChosenvQ2s(fileStem, subtractSelfCorrelations, my_y_label, chosenCols):
 	ax.set_xlabel(r'$\Delta \xi$', fontsize = labelsize + 10)
 	ax.set_ylabel(my_y_label, fontsize = labelsize + 10)
 	ax.legend(loc=0, ncol=1, prop={'size': plotfontsize+5})
-	plt.title(fileStem + ': vQ2 comparison')
+	#plt.title(fileStem + ': vQ2 comparison')
 	
 	#plt.show(block=False)
 	outfilename = resultsDir + fileStem + '_vQ2_comparison' + SCstring + '.pdf'
@@ -261,26 +266,20 @@ def plotSelfCorrelations():
 
 #################################################################
 def generate_all_plots():
-	plotTwoPCSnapshots('pi', 'white', 'white', '100', True)	#vQ2 value irrelevant for pure white noise
-	plotTwoPCSnapshots('pi', 'color', 'color', '10_000', True)
-	plotTwoPCSnapshots('pi', 'color', 'color', '1_000', True)
-	plotTwoPCSnapshots('pi', 'color', 'color', '0_333', True)
-	#plotTwoPCSnapshots('pi', 'white', 'white', '100', False)	#vQ2 value irrelevant for pure white noise
-	#plotTwoPCSnapshots('pi', 'color', 'color', '0_333', False)
-	#plotTwoPCSnapshots('pi', 'color', 'color', '1_000', False)
+	#plotTwoPCSnapshots('pi', 'white', 'white', '100', True)	#vQ2 value irrelevant for pure white noise
+	#plotTwoPCSnapshots('pi', 'color', 'color', '10_000', True)
+	#plotTwoPCSnapshots('pi', 'color', 'color', '1_000', True)
+	#plotTwoPCSnapshots('pi', 'color', 'color', '0_333', True)
 	#pause()
 	plotCorrelatorSnapshots('pi', 'k', 'white', 'white', '100', True)	#vQ2 value irrelevant for pure white noise
 	plotCorrelatorSnapshots('pi', 'k', 'color', 'color', '10_000', True)
 	plotCorrelatorSnapshots('pi', 'k', 'color', 'color', '1_000', True)
 	plotCorrelatorSnapshots('pi', 'k', 'color', 'color', '0_333', True)
-	#plotCorrelatorSnapshots('pi', 'k', 'white', 'white', '100', False)	#vQ2 value irrelevant for pure white noise
-	#plotCorrelatorSnapshots('pi', 'k', 'color', 'color', '1_000', False)
-	#plotCorrelatorSnapshots('pi', 'k', 'color', 'color', '0_333', False)
-	resultsDir='./'
-	plotCorrelatorSnapshots('pi', 'Dxi', 'white', 'white', '100', True)
-	plotCorrelatorSnapshots('pi', 'Dxi', 'color', 'color', '10_000', True)
-	plotCorrelatorSnapshots('pi', 'Dxi', 'color', 'color', '1_000', True)
-	plotCorrelatorSnapshots('pi', 'Dxi', 'color', 'color', '0_333', True)
+	#resultsDir='./'
+	#plotCorrelatorSnapshots('pi', 'Dxi', 'white', 'white', '100', True)
+	#plotCorrelatorSnapshots('pi', 'Dxi', 'color', 'color', '10_000', True)
+	#plotCorrelatorSnapshots('pi', 'Dxi', 'color', 'color', '1_000', True)
+	#plotCorrelatorSnapshots('pi', 'Dxi', 'color', 'color', '0_333', True)
 	#pause()
 	########
 	fileStem = 'dndn_%(space)s_%(PL)s%(PL)s' % {'PL': 'pi', 'space': 'k'}
@@ -292,8 +291,8 @@ def generate_all_plots():
 	#pause()
 	########
 	plotChosenvQ2s('twoPC_%(PL)s%(PL)s' % {'PL': 'pi'}, True, r'$B_{\pi\pi}$', [0, 1, 3])
-	#plotChosenvQ2s('twoPC_%(PL)s%(PL)s' % {'PL': 'p'}, True, r'$B_{p\bar p}$', [0, 1, 3])
-	#plotChosenvQ2s('twoPC_%(PL)s%(PL)s' % {'PL': 'K'}, True, r'$B_{K\bar K}$', [0, 1, 3])
+	plotChosenvQ2s('twoPC_%(PL)s%(PL)s' % {'PL': 'p'}, True, r'$B_{p\bar p}$', [0, 1, 3])
+	plotChosenvQ2s('twoPC_%(PL)s%(PL)s' % {'PL': 'K'}, True, r'$B_{K\bar K}$', [0, 1, 3])
 	#################
 	#plotSelfCorrelations()
 	#pause()

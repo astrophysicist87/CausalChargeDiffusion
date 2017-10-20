@@ -196,7 +196,7 @@ inline complex<double> Ftilde_n(double k, void * p)
 
 
 
-
+/*
 
 //define some functions for subtracting off singularities from product of colored Green's functions
 inline double g1(double x)
@@ -286,7 +286,7 @@ inline double GG_self_correlations(double k, double tau1p, double tau2p)
 	return ( final_result );
 }
 
-
+*/
 
 
 
@@ -365,38 +365,20 @@ inline complex<double> asymptotic_Gtilde_n_color(complex<double> k, double tau, 
 						* csc(M_PI * lambda);
 	double vQ = sqrt(vQ2);
 
+	complex<double> I_lambda_x_by_2 = asymptotics::I(lambda, 0.5*x);
+	complex<double> I_prime_lambda_x_by_2 = asymptotics::Iprime(lambda, 0.5*x);
+	complex<double> I_mlambda_x_by_2 = asymptotics::I(-lambda, 0.5*x);
+	complex<double> I_prime_mlambda_x_by_2 = asymptotics::Iprime(-lambda, 0.5*x);
 
-	complex<double> mainfactor_0 = 4.0 * lambda * exp(0.5*(x+xp)) / (M_PI*sqrt(x*xp));
-	complex<double> mainfactor = mainfactor_0;
+	complex<double> I_lambda_xp_by_2 = asymptotics::I(lambda, 0.5*xp);
+	complex<double> I_mlambda_xp_by_2 = asymptotics::I(-lambda, 0.5*xp);
 
-	//if ( lambda.real() <= 1.e-10 )
-	//{
-		complex<double> I_lambda_x_by_2 = asymptotics::I(lambda, 0.5*x);
-		complex<double> I_prime_lambda_x_by_2 = asymptotics::Iprime(lambda, 0.5*x);
-		complex<double> I_mlambda_x_by_2 = asymptotics::I(-lambda, 0.5*x);
-		complex<double> I_prime_mlambda_x_by_2 = asymptotics::Iprime(-lambda, 0.5*x);
+	complex<double> term1 = ( (x + 1.0) * I_lambda_x_by_2 + x * I_prime_lambda_x_by_2 )
+							* I_mlambda_xp_by_2;
+	complex<double> term2 = ( (x + 1.0) * I_mlambda_x_by_2 + x * I_prime_mlambda_x_by_2 )
+							* I_lambda_xp_by_2;
 
-		complex<double> I_lambda_xp_by_2 = asymptotics::I(lambda, 0.5*xp);
-		complex<double> I_mlambda_xp_by_2 = asymptotics::I(-lambda, 0.5*xp);
-
-		complex<double> term1 = ( (x + 1.0) * I_lambda_x_by_2 + x * I_prime_lambda_x_by_2 )
-								* I_mlambda_xp_by_2;
-		complex<double> term2 = ( (x + 1.0) * I_mlambda_x_by_2 + x * I_prime_mlambda_x_by_2 )
-								* I_lambda_xp_by_2;
-
-		/*cout << "new_asymp_G(): " << k << "   " << lambda << "   " << x << "   " << xp << endl << "\t\t"
-				<< I_lambda_x_by_2 << "   "
-				<< I_prime_lambda_x_by_2 << "   "
-				<< I_mlambda_x_by_2 << "   "
-				<< I_prime_mlambda_x_by_2 << endl << "\t\t"
-				<< I_lambda_xp_by_2 << "   "
-				<< I_mlambda_xp_by_2 << "   "
-				<< term1 << "   " << term2
-				<< endl;*/
-
-		mainfactor = term1 - term2;
-	//}
-	//cout << "Sanity check: " << k << "   " << lambda << "   " << x << "   " << xp << "   " << mainfactor_0 << "   " << mainfactor << endl;
+	complex<double> mainfactor = term1 - term2;
 
 	return ( i*k*prefactor*mainfactor );
 }
@@ -429,15 +411,12 @@ inline complex<double> Gtilde_n_color(double k, double tau, double taup)
 	if ( abs(denominator) < 1.e-15 && abs(numerator) < 1.e-15
 			&& 2.0*abs(n1-n2)/( abs(n1)+abs(n2) ) < 1.e-10 )
 	{
-		//if (0.25 - vQ2*k*k > 0.0)
 		if (vQ2*k*k < 1.0)	//play with exactly which point to turn on pure white noise approximation
 		{
 			result = exp(DQ * k * k * ((1.0/tau) - (1.0/taup)) );
 		}
 		else
 		{
-			//cerr << "Check: " << k << "   " << lambda << "   " << vQ2 << "   "
-			//		<< tau << "   " << taup << endl;
 			return ( asymptotic_Gtilde_n_color(k, tau, taup) );
 		}
 		//cerr << "Warning: " << k << "   " << abs(denominator) << "   " << abs(numerator)
@@ -517,7 +496,7 @@ inline void tau_integration_coloredGreen(
 		complex<double> tmp_result = hw_loc * local_x_wts[it] * ( 2.0 * DQ * chi_Q * T_loc / tau_loc ) *
 										(*Gtilde_X)(k, tauf, tau_loc) * (*Gtilde_Y)(-k, tauf, tau_loc);
 		result += tmp_result;
-		SC_result += hw_loc * local_x_wts[it] * ( 2.0 * DQ * chi_Q * T_loc / tau_loc ) * GG_self_correlations(k, tau_loc, tau_loc);
+		//SC_result += hw_loc * local_x_wts[it] * ( 2.0 * DQ * chi_Q * T_loc / tau_loc ) * GG_self_correlations(k, tau_loc, tau_loc);
 	}
 
 	delete [] local_x_pts;
@@ -582,15 +561,8 @@ inline void colored_tau_integration(
 										* ( exp(-(tauf - tau_p_local)/tauQ)
 											- exp(-(tauf - taui + tau_p_local)/tauQ) )
 										* (*Gtilde_X)(-k, tauf, tau_p_local);
-		//cout << "Check: " << -k << "   " << tau_p_local << "   " << new_hw_loc * local_x_wts[itp] / tau_p_local
-		//								* ( exp(-(tauf - tau_p_local)/tauQ)
-		//									- exp(-(tauf - taui + tau_p_local)/tauQ) )
-		//								* (*Gtilde_X)(-k, tauf, tau_p_local) << "   "
-		//		<< (*Gtilde_X)(-k, tauf, tau_p_local) << "   " << delta_n_delta_n_self_corr << endl;
 	}
 	delta_n_delta_n_self_corr *= -tauf*tauf*chi_mumu(Tf)*Tf/(tauQ*i*k);
-	//cout << "Final check: " << delta_n_delta_n_self_corr << endl;
-	//if (1) exit (0);
 
 	const int n_x_pts = 201;	//try this
 	double * x_pts = new double [n_x_pts];
@@ -632,10 +604,10 @@ inline void colored_tau_integration(
 
 			double sum_XY = exp(-abs(tX_loc - tY_loc) / tauQ) * eta_at_min_tp_tpp / (2.0*tauQ);
 			sum_X += hw_loc * x_wts[ix] * factor_X * factor_Y * sum_XY;
-			sum_SC_X += hw_loc * x_wts[ix] * sX_loc * sY_loc * GG_self_correlations(k, tX_loc, tY_loc) * sum_XY;
+			//sum_SC_X += hw_loc * x_wts[ix] * sX_loc * sY_loc * GG_self_correlations(k, tX_loc, tY_loc) * sum_XY;
 		}
 		locsum += new_hw_loc * local_x_wts[itp] * sum_X;
-		SC_sum += new_hw_loc * local_x_wts[itp] * sum_SC_X;
+		//SC_sum += new_hw_loc * local_x_wts[itp] * sum_SC_X;
 	}
 
 	delete [] x_pts;
