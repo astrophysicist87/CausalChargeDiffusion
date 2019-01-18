@@ -1,0 +1,40 @@
+SHELL=/bin/sh
+
+SRCS= \
+plot_SC.cpp \
+gauss_quadrature.cpp \
+lib.cpp
+
+HDRS= \
+gauss_quadrature.h \
+defs.h \
+lib.h \
+asymptotics.h
+
+MAKEFILE=makefile_SC
+
+COMMAND=plot_SC
+
+OBJS= $(addsuffix .o, $(basename $(SRCS)))
+
+CC= g++
+CFLAGS=  -pg -g -O3
+#WARNFLAGS= -ansi -pedantic -Wall -W \
+#   -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align \
+#   -Wwrite-strings -fshort-enums -fno-common 
+WARNFLAGS=
+LDFLAGS= -lgsl -lgslcblas 
+LIBS= -L/sw/lib -I/sw/include
+ 
+$(COMMAND): $(OBJS) $(HDRS) $(MAKEFILE) 
+	$(CC) -o $(COMMAND) $(OBJS) $(LDFLAGS) $(LIBS)
+
+plot_SC.o : plot_SC.cpp defs.h
+	$(CC) $(CFLAGS) $(WARNFLAGS) $(LIBS) -c plot_SC.cpp -o plot_SC.o
+
+clean:
+	rm -f $(OBJS)
+ 
+tarz:
+	tar zcf - $(MAKEFILE) $(SRCS) $(HDRS) > $(COMMAND).tar.gz
+ 
